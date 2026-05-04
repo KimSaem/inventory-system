@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>재고 관리</title>
+  <style>
+    body { font-family: Arial; text-align:center; margin-top:30px; }
+    input, button { padding:10px; margin:5px; }
+    .item { margin:10px; padding:10px; border:1px solid #ddd; }
+  </style>
+</head>
+<body>
+
+<h2>📦 집 재고 관리</h2>
+
+<input id="name" placeholder="물건 이름">
+<input id="qty" type="number" placeholder="수량">
+<button onclick="addItem()">추가</button>
+
+<div id="list"></div>
+
+<script>
+let items = [];
+
+function render() {
+  let html = "";
+  items.forEach((item, i) => {
+    html += `
+      <div class="item">
+        <b>${item.name}</b> - ${item.qty}
+        <button onclick="change(${i}, 1)">+</button>
+        <button onclick="change(${i}, -1)">-</button>
+      </div>
+    `;
+  });
+  document.getElementById("list").innerHTML = html;
+}
+
+function addItem() {
+  let name = document.getElementById("name").value;
+  let qty = parseInt(document.getElementById("qty").value);
+  items.push({name, qty});
+  render();
+}
+
+function change(i, v) {
+  items[i].qty += v;
+  render();
+}
+</script>
+
+</body>
+</html>
