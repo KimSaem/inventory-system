@@ -13,5 +13,5 @@ export async function getLogs(db) {
     .prepare("SELECT * FROM stock_logs ORDER BY id DESC")
     .all();
 
-  return res.results ?? [];
+  return res?.results ?? [];
 }
