@@ -8,7 +8,9 @@ export default {
     const logs = await getLogs(db);
 
     return new Response(JSON.stringify(logs), {
-      headers: { "Content-Type": "application/json" }
+      headers: {
+        "Content-Type": "application/json"
+      }
     });
   }
 };
