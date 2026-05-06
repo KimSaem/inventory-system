@@ -10,7 +10,7 @@ export async function transferStock(db, itemId, qty) {
     .bind(itemId)
     .all();
 
-  const item = res.results?.[0];
+  const item = res?.results?.[0];
 
   if (!item) throw new Error("ITEM_NOT_FOUND");
 
@@ -38,5 +38,8 @@ export async function transferStock(db, itemId, qty) {
     .bind(itemId, qty)
     .run();
 
-  return { success: true };
+  return {
+    success: true,
+    newQty
+  };
 }
