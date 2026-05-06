@@ -1,19 +1,17 @@
 export async function insertLog(db, log) {
-  const { item_id, from, to, qty } = log;
-
   return await db
     .prepare(
-      `INSERT INTO stock_logs (item_id, from_location, to_location, qty)
-       VALUES (?, ?, ?, ?)`
+      `INSERT INTO stock_logs (stock_id, qty)
+       VALUES (?, ?)`
     )
-    .bind(item_id, from, to, qty)
+    .bind(log.stock_id, log.qty)
     .run();
 }
 
 export async function getLogs(db) {
   const res = await db
-    .prepare("SELECT * FROM stock_logs ORDER BY created_at DESC")
+    .prepare("SELECT * FROM stock_logs ORDER BY id DESC")
     .all();
 
-  return res.results || [];
+  return res.results ?? [];
 }
