@@ -1,40 +1,31 @@
 import { createDB } from "../db/client.js";
 
-export default {
-  async fetch(req, env) {
-    try {
-      if (!env.DB) {
-        throw new Error("DB_NOT_BOUND");
-      }
+export async function onRequest(context) {
+  try {
+    const { env } = context;
 
-      const db = createDB(env);
-
-      const res = await db
-        .prepare("SELECT * FROM users ORDER BY id DESC")
-        .all();
-
-      const users = res?.results ?? [];
-
-      return new Response(
-        JSON.stringify({
-          success: true,
-          data: users
-        }),
-        {
-          headers: {
-            "Content-Type": "application/json"
-          }
-        }
-      );
-
-    } catch (e) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: e.message
-        }),
-        { status: 500 }
-      );
+    if (!env.DB) {
+      return Response.json({
+        success: false,
+        error: "DB_NOT_BOUND"
+      });
     }
+
+    const db = createDB(env);
+
+    const res = await db
+      .prepare("SELECT * FROM users ORDER BY id DESC")
+      .all();
+
+    return Response.json({
+      success: true,
+      data: res?.results ?? []
+    });
+
+  } catch (e) {
+    return Response.json({
+      success: false,
+      error: e.message
+    }, { status: 500 });
   }
-};
+}
