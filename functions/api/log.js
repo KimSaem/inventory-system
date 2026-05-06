@@ -1,42 +1,21 @@
 import { createDB } from "../db/client.js";
+import { getLogs } from "../services/logService.js";
 
-export default {
-  async fetch(req, env) {
-    try {
-      if (!env.DB) {
-        throw new Error("DB_NOT_BOUND");
-      }
+export async function onRequest(context) {
+  try {
+    const db = createDB(context.env);
 
-      const db = createDB(env);
+    const logs = await getLogs(db);
 
-      const res = await db
-        .prepare(
-          "SELECT * FROM stock_logs ORDER BY id DESC LIMIT 100"
-        )
-        .all();
+    return Response.json({
+      success: true,
+      data: logs
+    });
 
-      const logs = res?.results ?? [];
-
-      return new Response(
-        JSON.stringify({
-          success: true,
-          data: logs
-        }),
-        {
-          headers: {
-            "Content-Type": "application/json"
-          }
-        }
-      );
-
-    } catch (e) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: e.message
-        }),
-        { status: 500 }
-      );
-    }
+  } catch (e) {
+    return Response.json({
+      success: false,
+      error: e.message
+    }, { status: 500 });
   }
-};
+}
