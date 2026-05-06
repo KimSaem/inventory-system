@@ -9,7 +9,7 @@ export default {
 
       const result = await transferStock(
         db,
-        body.item_id,
+        body.stock_id,
         body.qty
       );
 
