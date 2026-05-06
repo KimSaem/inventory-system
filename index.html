@@ -1,52 +1,59 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset = "utf-8">
-  <title>재고 관리</title>
+  <title>재고 시스템</title>
   <style>
     body { font-family: Arial; text-align:center; margin-top:30px; }
     input, button { padding:10px; margin:5px; }
-    .item { margin:10px; padding:10px; border:1px solid #ddd; }
+    .item { border:1px solid #ddd; margin:10px; padding:10px; }
   </style>
 </head>
 <body>
 
-<h2>📦 집 재고 관리</h2>
+<h2>📦 재고 관리 시스템</h2>
 
-<input id="name" placeholder="물건 이름">
+<input id="name" placeholder="이름">
 <input id="qty" type="number" placeholder="수량">
-<button onclick="addItem()">추가</button>
+<button onclick="add()">추가</button>
 
 <div id="list"></div>
 
 <script>
-let items = [];
+async function load() {
+  const res = await fetch("/api/items");
+  const data = await res.json();
 
-function render() {
-  let html = "";
-  items.forEach((item, i) => {
-    html += `
+  document.getElementById("list").innerHTML =
+    data.map(i => `
       <div class="item">
-        <b>${item.name}</b> - ${item.qty}
-        <button onclick="change(${i}, 1)">+</button>
-        <button onclick="change(${i}, -1)">-</button>
+        ${i.name} - ${i.qty}
+        <button onclick="del(${i.id})">삭제</button>
       </div>
-    `;
+    `).join("");
+}
+
+async function add() {
+  await fetch("/api/items", {
+    method: "POST",
+    body: JSON.stringify({
+      name: document.getElementById("name").value,
+      qty: parseInt(document.getElementById("qty").value)
+    })
   });
-  document.getElementById("list").innerHTML = html;
+
+  load();
 }
 
-function addItem() {
-  let name = document.getElementById("name").value;
-  let qty = parseInt(document.getElementById("qty").value);
-  items.push({name, qty});
-  render();
+async function del(id) {
+  await fetch("/api/items", {
+    method: "DELETE",
+    body: JSON.stringify({ id })
+  });
+
+  load();
 }
 
-function change(i, v) {
-  items[i].qty += v;
-  render();
-}
+load();
 </script>
 
 </body>
