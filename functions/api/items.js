@@ -1,21 +1,35 @@
-export async function onRequest(context) {
-  const db = context.env.DB;
-  const { request } = context;
+import { createDB } from "../db/client.js";
+import {
+  createItem,
+  updateItem,
+  deleteItem
+} from "../services/itemService.js";
 
-  if (request.method === "GET") {
-    const { results } = await db.prepare("SELECT * FROM items").all();
-    return Response.json(results);
+export default {
+  async fetch(req, env) {
+    const db = createDB(env);
+    const method = req.method;
+
+    const body = await req.json().catch(() => ({}));
+
+    try {
+      if (method === "POST") {
+        await createItem(db, body);
+      }
+
+      if (method === "PUT") {
+        await updateItem(db, body.id, body);
+      }
+
+      if (method === "DELETE") {
+        await deleteItem(db, body.id);
+      }
+
+      return new Response(JSON.stringify({ success: true }));
+    } catch (e) {
+      return new Response(JSON.stringify({ error: e.message }), {
+        status: 400
+      });
+    }
   }
-
-  if (request.method === "POST") {
-    const { name } = await request.json();
-
-    await db.prepare("INSERT INTO items (name) VALUES (?)")
-      .bind(name)
-      .run();
-
-    return Response.json({ success: true });
-  }
-
-  return new Response("Method not allowed", { status: 405 });
-}
+};
