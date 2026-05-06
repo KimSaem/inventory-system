@@ -1,5 +1,5 @@
 export default {
   async fetch() {
-    return new Response("API_OK");
+    return new Response("FUNCTION_WORKS");
   }
 };
