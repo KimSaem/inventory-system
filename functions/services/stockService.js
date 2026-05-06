@@ -3,7 +3,7 @@ export async function getStock(db) {
     .prepare("SELECT * FROM stock ORDER BY id DESC")
     .all();
 
-  return res.results ?? [];
+  return res?.results ?? [];
 }
 
 export async function updateStock(db, id, qty) {
