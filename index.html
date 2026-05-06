@@ -3,36 +3,84 @@
 <head>
   <meta charset="utf-8">
   <title>재고 시스템</title>
+
   <style>
-    body { font-family: Arial; text-align:center; }
-    .item { border:1px solid #ddd; margin:10px auto; padding:10px; width:300px; }
-    button { padding:5px 10px; margin:3px; }
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: #f7f7f7;
+    }
+
+    h2 {
+      margin-top: 20px;
+    }
+
+    .item {
+      border: 1px solid #ddd;
+      background: white;
+      margin: 10px auto;
+      padding: 15px;
+      width: 320px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+
+    input {
+      width: 80px;
+      padding: 5px;
+      margin-top: 5px;
+      text-align: center;
+    }
+
+    button {
+      padding: 6px 12px;
+      margin-top: 8px;
+      cursor: pointer;
+    }
   </style>
 </head>
+
 <body>
 
-<h2>📦 재고 관리</h2>
+<h2>📦 재고 관리 시스템</h2>
 
-<div id="list"></div>
+<div id="list">Loading...</div>
 
 <script>
 async function load() {
-  const res = await fetch("/api/stock");
-  const data = await res.json();
+  try {
+    const res = await fetch("/api/stock");
+    const data = await res.json();
 
-  document.getElementById("list").innerHTML =
-    data.map(i => `
+    document.getElementById("list").innerHTML = data.map(i => `
       <div class="item">
-        <b>${i.name}</b><br>
+        <b>${i.name}</b><br><br>
+
         🏠 집: ${i.home_qty || 0}<br>
         🏪 가게: ${i.store_qty || 0}<br><br>
 
-        <button onclick="move(${i.id}, 5)">집 → 가게 +5</button>
+        <input type="number" id="qty-${i.id}" value="1" min="1"><br>
+
+        <button onclick="move(${i.id}, document.getElementById('qty-${i.id}').value)">
+          집 → 가게 이동
+        </button>
       </div>
     `).join("");
+
+  } catch (err) {
+    document.getElementById("list").innerHTML = "데이터 로딩 실패";
+    console.error(err);
+  }
 }
 
 async function move(id, qty) {
+  qty = parseInt(qty);
+
+  if (!qty || qty <= 0) {
+    alert("수량을 입력하세요");
+    return;
+  }
+
   await fetch("/api/transfer", {
     method: "POST",
     headers: {
@@ -44,7 +92,7 @@ async function move(id, qty) {
     })
   });
 
-  load();
+  load(); // 새로고침
 }
 
 load();
