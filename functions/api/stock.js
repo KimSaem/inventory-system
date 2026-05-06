@@ -1,41 +1,9 @@
-import { createDB } from "../db/client.js";
+export async function onRequest(context) {
+  const db = createDB(context.env);
 
-export default {
-  async fetch(req, env) {
-    try {
-      if (!env.DB) {
-        throw new Error("DB_NOT_BOUND");
-      }
+  const res = await db
+    .prepare("SELECT * FROM stock")
+    .all();
 
-      const db = createDB(env);
-
-      const res = await db
-        .prepare("SELECT * FROM stock ORDER BY id DESC")
-        .all();
-
-      const stock = res?.results ?? [];
-
-      return new Response(
-        JSON.stringify({
-          success: true,
-          data: stock
-        }),
-        {
-          headers: {
-            "Content-Type": "application/json",
-            "Cache-Control": "no-store"
-          }
-        }
-      );
-
-    } catch (e) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: e.message
-        }),
-        { status: 500 }
-      );
-    }
-  }
-};
+  return Response.json(res);
+}
