@@ -3,9 +3,8 @@ import { transferStock } from "../services/inventoryService.js";
 
 export default {
   async fetch(req, env) {
-    const db = createDB(env);
-
     try {
+      const db = createDB(env);
       const body = await req.json();
 
       const result = await transferStock(
@@ -15,9 +14,9 @@ export default {
       );
 
       return new Response(JSON.stringify(result));
-    } catch (err) {
+    } catch (e) {
       return new Response(
-        JSON.stringify({ error: err.message }),
+        JSON.stringify({ error: e.message }),
         { status: 400 }
       );
     }
