@@ -1,16 +1,14 @@
-export async function onRequest(context) {
-  const db = context.env.DB;
+import { createDB } from "../db/client.js";
+import { getItems } from "../services/itemService.js";
 
-  const { results } = await db.prepare(`
-    SELECT 
-      items.id,
-      items.name,
-      SUM(CASE WHEN location_id = 1 THEN qty ELSE 0 END) AS home_qty,
-      SUM(CASE WHEN location_id = 2 THEN qty ELSE 0 END) AS store_qty
-    FROM items
-    LEFT JOIN stock ON items.id = stock.item_id
-    GROUP BY items.id
-  `).all();
+export default {
+  async fetch(req, env) {
+    const db = createDB(env);
 
-  return Response.json(results);
-}
+    const items = await getItems(db);
+
+    return new Response(JSON.stringify(items), {
+      headers: { "Content-Type": "application/json" }
+    });
+  }
+};
