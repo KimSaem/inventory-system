@@ -1,41 +1,75 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
   <meta charset="utf-8">
-  <title>재고 시스템</title>
+  <title>Inventory System</title>
 
   <style>
     body {
       font-family: Arial, sans-serif;
+      background: #f5f6f8;
       text-align: center;
-      background: #f7f7f7;
+      margin: 0;
+      padding: 20px;
     }
 
     h2 {
-      margin-top: 20px;
+      margin-bottom: 20px;
+    }
+
+    #list {
+      max-width: 600px;
+      margin: 0 auto;
     }
 
     .item {
-      border: 1px solid #ddd;
-      background: white;
-      margin: 10px auto;
+      background: #fff;
+      border: 1px solid #e6e6e6;
+      border-radius: 10px;
       padding: 15px;
-      width: 320px;
-      border-radius: 8px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      margin-bottom: 12px;
+      text-align: left;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+
+    .title {
+      font-weight: bold;
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+
+    .qty {
+      font-size: 14px;
+      margin: 3px 0;
     }
 
     input {
       width: 80px;
-      padding: 5px;
-      margin-top: 5px;
-      text-align: center;
+      padding: 6px;
+      margin-top: 8px;
     }
 
     button {
-      padding: 6px 12px;
-      margin-top: 8px;
+      padding: 6px 10px;
+      margin-left: 5px;
       cursor: pointer;
+      border: none;
+      background: #2d7ef7;
+      color: white;
+      border-radius: 5px;
+    }
+
+    button:hover {
+      background: #1c5fd6;
+    }
+
+    .error {
+      color: red;
+      margin-top: 20px;
+    }
+
+    .loading {
+      color: #666;
     }
   </style>
 </head>
@@ -44,57 +78,104 @@
 
 <h2>📦 재고 관리 시스템</h2>
 
-<div id="list">Loading...</div>
+<div id="list" class="loading">Loading...</div>
 
 <script>
-async function load() {
-  try {
-    const res = await fetch("/api/stock");
-    const data = await res.json();
+/**
+ * 공통 API 호출
+ */
+async function fetchStock() {
+  const res = await fetch("/api/stock");
+  const result = await res.json();
 
-    document.getElementById("list").innerHTML = data.map(i => `
-      <div class="item">
-        <b>${i.name}</b><br><br>
+  return result;
+}
 
-        🏠 집: ${i.home_qty || 0}<br>
-        🏪 가게: ${i.store_qty || 0}<br><br>
+/**
+ * UI 렌더링
+ */
+function renderList(data) {
+  const list = document.getElementById("list");
 
-        <input type="number" id="qty-${i.id}" value="1" min="1"><br>
+  if (!Array.isArray(data)) {
+    list.innerHTML = `<div class="error">데이터 형식 오류</div>`;
+    return;
+  }
 
-        <button onclick="move(${i.id}, document.getElementById('qty-${i.id}').value)">
-          집 → 가게 이동
+  list.innerHTML = data.map(item => `
+    <div class="item">
+      <div class="title">${item.name ?? "Unnamed"}</div>
+
+      <div class="qty">🏠 집: ${item.home_qty ?? 0}</div>
+      <div class="qty">🏪 가게: ${item.store_qty ?? 0}</div>
+
+      <div style="margin-top:10px;">
+        <input type="number" id="qty-${item.id}" value="1" min="1">
+
+        <button onclick="moveStock(${item.id})">
+          이동
         </button>
       </div>
-    `).join("");
+    </div>
+  `).join("");
+}
+
+/**
+ * 데이터 로드
+ */
+async function load() {
+  try {
+    const result = await fetchStock();
+
+    if (!result || result.success === false) {
+      document.getElementById("list").innerHTML =
+        `<div class="error">데이터 로딩 실패</div>`;
+      return;
+    }
+
+    renderList(result.data);
 
   } catch (err) {
-    document.getElementById("list").innerHTML = "데이터 로딩 실패";
     console.error(err);
+    document.getElementById("list").innerHTML =
+      `<div class="error">서버 오류</div>`;
   }
 }
 
-async function move(id, qty) {
-  qty = parseInt(qty);
+/**
+ * 재고 이동
+ */
+async function moveStock(id) {
+  const input = document.getElementById(`qty-${id}`);
+  const qty = parseInt(input.value);
 
   if (!qty || qty <= 0) {
     alert("수량을 입력하세요");
     return;
   }
 
-  await fetch("/api/transfer", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      item_id: id,
-      qty: qty
-    })
-  });
+  try {
+    await fetch("/api/transfer", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        stock_id: id,
+        qty: qty,
+        type: "OUT"
+      })
+    });
 
-  load(); // 새로고침
+    await load();
+
+  } catch (err) {
+    console.error(err);
+    alert("이동 실패");
+  }
 }
 
+// 초기 실행
 load();
 </script>
 
