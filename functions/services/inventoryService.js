@@ -5,34 +5,38 @@ export async function transferStock(db, itemId, qty) {
     throw new Error("INVALID_QTY");
   }
 
-  const itemRes = await db
-    .prepare("SELECT * FROM items WHERE id = ?")
+  const res = await db
+    .prepare("SELECT * FROM stock WHERE id = ?")
     .bind(itemId)
     .all();
 
-  const item = itemRes.results?.[0];
+  const item = res.results?.[0];
 
   if (!item) throw new Error("ITEM_NOT_FOUND");
-  if (item.home_qty < qty) throw new Error("NOT_ENOUGH_STOCK");
 
-  const newHome = item.home_qty - qty;
-  const newStore = item.store_qty + qty;
+  if (item.quantity < qty) {
+    throw new Error("NOT_ENOUGH_STOCK");
+  }
+
+  const newQty = item.quantity - qty;
 
   await db
-    .prepare(
-      `UPDATE items
-       SET home_qty = ?, store_qty = ?
-       WHERE id = ?`
-    )
-    .bind(newHome, newStore, itemId)
+    .prepare("UPDATE stock SET quantity = ? WHERE id = ?")
+    .bind(newQty, itemId)
     .run();
 
   await insertLog(db, {
-    item_id: itemId,
-    from: "home",
-    to: "store",
+    stock_id: itemId,
     qty
   });
+
+  await db
+    .prepare(
+      `INSERT INTO transfers (stock_id, qty, type)
+       VALUES (?, ?, 'OUT')`
+    )
+    .bind(itemId, qty)
+    .run();
 
   return { success: true };
 }
