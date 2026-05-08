@@ -205,6 +205,7 @@ button:hover{
   <div id="logs"></div>
 </div>
 
+
 <script>
 
 let STOCK = [];
@@ -288,9 +289,9 @@ function renderStock(items){
         </div>
 
         <div class="row">
-          <span>Status</span>
-          <span class="${statusClass}">
-            ${statusClass.toUpperCase()}
+          <span>🤖 AI Order</span>
+          <span class="qty">
+            ${item.ai_order || 0}
           </span>
         </div>
 
@@ -480,10 +481,12 @@ document.getElementById("search").addEventListener("input",(e)=>{
 });
 
 loadDashboard();
+loadAlerts();
 
 // auto refresh
 setInterval(loadStock, 5000);
 setInterval(loadLogs, 10000);
+setInterval(loadAlerts, 15000);
 
 </script>
 
