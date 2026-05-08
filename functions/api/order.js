@@ -1,70 +1,75 @@
 import { createDB } from "../db/client.js";
 
-export async function onRequest(context){
+export async function onRequest(context) {
+  const { env, request } = context;
 
-  try{
-
-    const db =
-      createDB(context.env);
-
-    const body =
-      await context.request.json();
-
-    const stock_id =
-      Number(body.stock_id);
-
-    const qty =
-      Number(body.qty);
-
-    if(!stock_id || !qty){
-      throw new Error("INVALID_INPUT");
+  try {
+    if (!env.DB) {
+      return Response.json(
+        { success: false, error: "DB_NOT_BOUND" },
+        { status: 500 }
+      );
     }
 
-    // 상품 조회
-    const res = await db
-      .prepare(`
-        SELECT *
-        FROM stock
-        WHERE id = ?
-      `)
+    const db = createDB(env);
+    const body = await request.json();
+
+    const stock_id = Number(body.stock_id);
+    const qty = Number(body.qty);
+
+    if (!stock_id || !qty || qty <= 0) {
+      return Response.json(
+        { success: false, error: "INVALID_INPUT" },
+        { status: 400 }
+      );
+    }
+
+    // 1. 상품 조회
+    const itemRes = await db
+      .prepare("SELECT * FROM stock WHERE id = ?")
       .bind(stock_id)
       .all();
 
-    const item =
-      res?.results?.[0];
+    const item = itemRes?.results?.[0];
 
-    if(!item){
-      throw new Error("ITEM_NOT_FOUND");
+    if (!item) {
+      return Response.json(
+        { success: false, error: "ITEM_NOT_FOUND" },
+        { status: 404 }
+      );
     }
 
-    // 재고 부족
-    if(item.store_qty < qty){
-      throw new Error("NOT_ENOUGH_STORE_STOCK");
+    // 2. 재고 체크
+    if (item.store_qty < qty) {
+      return Response.json(
+        { success: false, error: "NOT_ENOUGH_STORE_STOCK" },
+        { status: 400 }
+      );
     }
 
-    // 매장 재고 감소
-    const newQty =
-      item.store_qty - qty;
+    const newStoreQty = item.store_qty - qty;
 
+    // 3. 재고 업데이트
     await db
       .prepare(`
         UPDATE stock
         SET store_qty = ?
         WHERE id = ?
       `)
-      .bind(newQty, stock_id)
+      .bind(newStoreQty, stock_id)
       .run();
 
-    // 주문 생성
+    // 4. 주문 기록
     await db
       .prepare(`
         INSERT INTO orders (
           stock_id,
           item_name,
           qty,
-          total_price
+          total_price,
+          created_at
         )
-        VALUES (?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
       `)
       .bind(
         stock_id,
@@ -74,17 +79,41 @@ export async function onRequest(context){
       )
       .run();
 
+    // 5. 로그 기록
+    await db
+      .prepare(`
+        INSERT INTO stock_logs (
+          stock_id,
+          action,
+          qty,
+          note
+        )
+        VALUES (?, ?, ?, ?)
+      `)
+      .bind(
+        stock_id,
+        "ORDER",
+        qty,
+        "Store sale order processed"
+      )
+      .run();
+
     return Response.json({
-      success:true
+      success: true,
+      data: {
+        stock_id,
+        sold_qty: qty,
+        remaining_store_qty: newStoreQty
+      }
     });
 
-  }catch(e){
-
-    return Response.json({
-      success:false,
-      error:e.message
-    },{
-      status:400
-    });
+  } catch (e) {
+    return Response.json(
+      {
+        success: false,
+        error: e.message || "SERVER_ERROR"
+      },
+      { status: 500 }
+    );
   }
 }
