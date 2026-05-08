@@ -1,27 +1,39 @@
-export async function getStock(db) {
+export async function getStock(db){
+
   const res = await db
-    .prepare("SELECT * FROM stock ORDER BY id DESC")
+    .prepare(`
+      SELECT * FROM stock
+      ORDER BY id DESC
+    `)
     .all();
 
   return res?.results ?? [];
 }
 
-export async function getStockById(db, id) {
+export async function getStockById(db,id){
+
   const res = await db
-    .prepare("SELECT * FROM stock WHERE id = ?")
+    .prepare(`
+      SELECT * FROM stock
+      WHERE id = ?
+    `)
     .bind(id)
     .all();
 
   return res?.results?.[0] ?? null;
 }
 
-export async function updateStockQty(db, id, home_qty, store_qty) {
+export async function updateStock(db,id,home,store){
+
   return await db
     .prepare(`
-      UPDATE stock 
-      SET home_qty = ?, store_qty = ?, updated_at = CURRENT_TIMESTAMP
+      UPDATE stock
+      SET
+        home_qty = ?,
+        store_qty = ?,
+        updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
     `)
-    .bind(home_qty, store_qty, id)
+    .bind(home,store,id)
     .run();
 }
