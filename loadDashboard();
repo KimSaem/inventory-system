@@ -301,9 +301,6 @@ function renderStock(items){
   grid.innerHTML = items.map(item => {
 
 
-    let statusClass = "good";
-    let warningText = "";
-
     const total = Number(item.home_qty || 0) + Number(item.store_qty || 0);
 
     let statusClass = "good";
