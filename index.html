@@ -1,182 +1,235 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8">
-  <title>Inventory System</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+  <title>Inventory ERP</title>
 
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f5f6f8;
-      text-align: center;
-      margin: 0;
-      padding: 20px;
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
     }
 
-    h2 {
-      margin-bottom: 20px;
+    body{
+      font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+      background:#f5f5f7;
+      color:#111;
+      padding:20px;
     }
 
-    #list {
-      max-width: 600px;
-      margin: 0 auto;
+    h1{
+      font-size:32px;
+      margin-bottom:25px;
+      font-weight:700;
     }
 
-    .item {
-      background: #fff;
-      border: 1px solid #e6e6e6;
-      border-radius: 10px;
-      padding: 15px;
-      margin-bottom: 12px;
-      text-align: left;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(320px,1fr));
+      gap:20px;
     }
 
-    .title {
-      font-weight: bold;
-      font-size: 16px;
-      margin-bottom: 10px;
+    .card{
+      background:white;
+      border-radius:24px;
+      padding:24px;
+      box-shadow:0 10px 30px rgba(0,0,0,0.05);
+      transition:0.2s;
     }
 
-    .qty {
-      font-size: 14px;
-      margin: 3px 0;
+    .card:hover{
+      transform:translateY(-3px);
     }
 
-    input {
-      width: 80px;
-      padding: 6px;
-      margin-top: 8px;
+    .title{
+      font-size:24px;
+      font-weight:700;
+      margin-bottom:20px;
     }
 
-    button {
-      padding: 6px 10px;
-      margin-left: 5px;
-      cursor: pointer;
-      border: none;
-      background: #2d7ef7;
-      color: white;
-      border-radius: 5px;
+    .qty-row{
+      display:flex;
+      justify-content:space-between;
+      margin-bottom:12px;
+      font-size:18px;
     }
 
-    button:hover {
-      background: #1c5fd6;
+    .qty{
+      font-weight:700;
     }
 
-    .error {
-      color: red;
-      margin-top: 20px;
+    input{
+      width:100%;
+      padding:14px;
+      border:none;
+      background:#f0f0f0;
+      border-radius:14px;
+      margin-top:12px;
+      font-size:16px;
     }
 
-    .loading {
-      color: #666;
+    .actions{
+      display:flex;
+      gap:10px;
+      margin-top:15px;
+    }
+
+    button{
+      flex:1;
+      border:none;
+      padding:14px;
+      border-radius:14px;
+      font-size:15px;
+      font-weight:700;
+      cursor:pointer;
+      transition:0.2s;
+    }
+
+    .to-store{
+      background:#0071e3;
+      color:white;
+    }
+
+    .to-home{
+      background:#34c759;
+      color:white;
+    }
+
+    button:hover{
+      opacity:0.9;
+    }
+
+    .loading{
+      font-size:18px;
+      opacity:0.6;
     }
   </style>
 </head>
 
 <body>
 
-<h2>📦 재고 관리 시스템</h2>
+<h1>📦 Inventory ERP</h1>
 
-<div id="list" class="loading">Loading...</div>
+<div id="app" class="grid">
+  <div class="loading">Loading...</div>
+</div>
 
 <script>
-/**
- * 공통 API 호출
- */
-async function fetchStock() {
-  const res = await fetch("/api/stock");
-  const result = await res.json();
 
-  return result;
-}
+async function loadStock() {
 
-/**
- * UI 렌더링
- */
-function renderList(data) {
-  const list = document.getElementById("list");
+  const app = document.getElementById("app");
 
-  if (!Array.isArray(data)) {
-    list.innerHTML = `<div class="error">데이터 형식 오류</div>`;
-    return;
-  }
-
-  list.innerHTML = data.map(item => `
-    <div class="item">
-      <div class="title">${item.name ?? "Unnamed"}</div>
-
-      <div class="qty">🏠 집: ${item.home_qty ?? 0}</div>
-      <div class="qty">🏪 가게: ${item.store_qty ?? 0}</div>
-
-      <div style="margin-top:10px;">
-        <input type="number" id="qty-${item.id}" value="1" min="1">
-
-        <button onclick="moveStock(${item.id})">
-          이동
-        </button>
-      </div>
-    </div>
-  `).join("");
-}
-
-/**
- * 데이터 로드
- */
-async function load() {
   try {
-    const result = await fetchStock();
 
-    if (!result || result.success === false) {
-      document.getElementById("list").innerHTML =
-        `<div class="error">데이터 로딩 실패</div>`;
-      return;
+    const res = await fetch("/api/stock");
+    const json = await res.json();
+
+    if(!json.success){
+      throw new Error(json.error || "SERVER_ERROR");
     }
 
-    renderList(result.data);
+    const items = json.data;
 
-  } catch (err) {
+    app.innerHTML = items.map(item => `
+      <div class="card">
+
+        <div class="title">${item.name}</div>
+
+        <div class="qty-row">
+          <span>🏠 Home</span>
+          <span class="qty">${item.home_qty}</span>
+        </div>
+
+        <div class="qty-row">
+          <span>🏪 Store</span>
+          <span class="qty">${item.store_qty}</span>
+        </div>
+
+        <input
+          type="number"
+          id="qty-${item.id}"
+          value="1"
+          min="1"
+        />
+
+        <div class="actions">
+
+          <button
+            class="to-store"
+            onclick="move(${item.id}, 'home', 'store')"
+          >
+            Home → Store
+          </button>
+
+          <button
+            class="to-home"
+            onclick="move(${item.id}, 'store', 'home')"
+          >
+            Store → Home
+          </button>
+
+        </div>
+
+      </div>
+    `).join("");
+
+  } catch(err){
+
+    app.innerHTML = `
+      <div class="card">
+        ❌ ${err.message}
+      </div>
+    `;
+
     console.error(err);
-    document.getElementById("list").innerHTML =
-      `<div class="error">서버 오류</div>`;
   }
 }
 
-/**
- * 재고 이동
- */
-async function moveStock(id) {
-  const input = document.getElementById(`qty-${id}`);
-  const qty = parseInt(input.value);
+async function move(stock_id, from, to){
 
-  if (!qty || qty <= 0) {
-    alert("수량을 입력하세요");
+  const qty = parseInt(
+    document.getElementById(`qty-${stock_id}`).value
+  );
+
+  if(!qty || qty <= 0){
+    alert("수량 입력");
     return;
   }
 
-  try {
-    await fetch("/api/transfer", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
+  try{
+
+    const res = await fetch("/api/transfer",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json"
       },
-      body: JSON.stringify({
-        stock_id: id,
-        qty: qty,
-        type: "OUT"
+      body:JSON.stringify({
+        stock_id,
+        qty,
+        from,
+        to
       })
     });
 
-    await load();
+    const json = await res.json();
 
-  } catch (err) {
-    console.error(err);
-    alert("이동 실패");
+    if(!json.success){
+      throw new Error(json.error);
+    }
+
+    await loadStock();
+
+  }catch(err){
+    alert(err.message);
   }
 }
 
-// 초기 실행
-load();
+loadStock();
+
 </script>
 
 </body>
