@@ -211,6 +211,9 @@ button:hover{
   class="search"
   placeholder="Search inventory..."
 />
+  <div class="${statusClass}">
+  ${warningText}
+</div>
 
 <div class="add-box">
 
@@ -278,6 +281,19 @@ document.getElementById("storeStock").innerText =
 }
 
 function renderStock(items){
+  const LOW_HOME = 5;
+  const LOW_STORE = 1;
+  let statusClass = "good";
+  let warningText = "";
+
+  if(item.store_qty <= LOW_STORE){
+    statusClass = "low";
+    warningText = "⚠ STORE LOW";
+  }
+  else if(item.home_qty <= LOW_HOME){
+    statusClass = "medium";
+    warningText = "⚠ HOME LOW";
+  }
 
   const grid =
     document.getElementById("stockGrid");
