@@ -245,6 +245,20 @@ async function loadDashboard(){
   await loadStock();
   await loadLogs();
 }
+  
+  async function loadSales(){
+
+  const res = await fetch("/api/sales");
+  const json = await res.json();
+
+  const data = json.data || [];
+
+  const totalSales =
+    data.reduce((a,b)=>a + (b.total || 0),0);
+
+  console.log("TOTAL SALES:", totalSales);
+}
+  
 
 async function loadStock(){
 
