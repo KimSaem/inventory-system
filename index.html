@@ -181,6 +181,7 @@ button:hover{
     <div class="kpi-value" id="storeStock">0</div>
   </div>
 
+
 </div>
 
 <input type="text" id="search" class="search" placeholder="Search inventory..." />
@@ -195,6 +196,8 @@ button:hover{
 
 </div>
 
+<div id="alerts" style="margin-top:20px;"></div>
+  
 <div id="stockGrid" class="grid"></div>
 
 <div class="logs">
@@ -322,7 +325,7 @@ function renderStock(items){
     `;
   }).join("");
 }
-
+ 
 async function createItem(){
 
   const name = document.getElementById("newName").value;
@@ -354,6 +357,21 @@ async function createItem(){
   loadDashboard();
 }
 
+  async function loadAlerts(){
+
+  const res = await fetch("/api/cron-check-stock");
+  const json = await res.json();
+
+  const box = document.getElementById("alerts");
+
+  box.innerHTML = `
+    <div class="card">
+      <h3>🚨 Alerts</h3>
+      <pre>${JSON.stringify(json.alerts, null, 2)}</pre>
+    </div>
+  `;
+}
+  
 async function adjustStock(stock_id){
 
   const home_qty = Number(document.getElementById(`home-adjust-${stock_id}`).value);
