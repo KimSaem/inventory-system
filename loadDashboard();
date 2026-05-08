@@ -617,8 +617,13 @@ document
 
 loadDashboard();
   // 1. 실시간 동기화 (전체 리프레시)
-setInterval(loadStock, 5000);
-setInterval(loadLogs, 10000);
+setInterval(() => {
+  loadStock();
+}, 5000);
+
+setInterval(() => {
+  loadLogs();
+}, 15000);
 
 </script>
 
