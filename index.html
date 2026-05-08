@@ -462,7 +462,81 @@ async function createItem(){
 
   loadDashboard();
 }
+async function adjustStock(stock_id){
 
+  const home_qty =
+    Number(
+      document.getElementById(
+        `home-adjust-${stock_id}`
+      ).value
+    );
+
+  const store_qty =
+    Number(
+      document.getElementById(
+        `store-adjust-${stock_id}`
+      ).value
+    );
+
+  const res = await fetch("/api/adjust",{
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json"
+    },
+    body:JSON.stringify({
+      stock_id,
+      home_qty,
+      store_qty
+    })
+  });
+
+  const json =
+    await res.json();
+
+  if(!json.success){
+    alert(json.error);
+    return;
+  }
+
+  loadDashboard();
+}
+
+async function sellItem(stock_id){
+
+  const qty =
+    parseInt(
+      document.getElementById(
+        `qty-${stock_id}`
+      ).value
+    );
+
+  if(!qty || qty <= 0){
+    alert("수량 오류");
+    return;
+  }
+
+  const res = await fetch("/api/order",{
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json"
+    },
+    body:JSON.stringify({
+      stock_id,
+      qty
+    })
+  });
+
+  const json =
+    await res.json();
+
+  if(!json.success){
+    alert(json.error);
+    return;
+  }
+
+  loadDashboard();
+}
+  
 async function deleteItem(id){
 
   if(!confirm("삭제할까?")){
