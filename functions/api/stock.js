@@ -1,21 +1,26 @@
 import { createDB } from "../db/client.js";
 import { getStock } from "../services/stockService.js";
 
-export async function onRequest(context) {
-  try {
+export async function onRequest(context){
+
+  try{
+
     const db = createDB(context.env);
 
     const stock = await getStock(db);
 
     return Response.json({
-      success: true,
-      data: stock
+      success:true,
+      data:stock
     });
 
-  } catch (e) {
+  }catch(e){
+
     return Response.json({
-      success: false,
-      error: e.message
-    }, { status: 500 });
+      success:false,
+      error:e.message
+    },{
+      status:500
+    });
   }
 }
