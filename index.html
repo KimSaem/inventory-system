@@ -253,7 +253,7 @@ async function loadStock(){
     return;
   }
 
-  STOCK = json.data;
+  STOCK = json.data || [];
 
   renderStock(STOCK);
   updateKPI(STOCK);
@@ -265,10 +265,16 @@ function updateKPI(items){
     items.length;
 
   document.getElementById("homeStock").innerText =
-    items.reduce((a,b)=>a+b.home_qty,0);
+  items.reduce(
+    (a,b)=>a + Number(b.home_qty || 0),
+    0
+  );
 
-  document.getElementById("storeStock").innerText =
-    items.reduce((a,b)=>a+b.store_qty,0);
+document.getElementById("storeStock").innerText =
+  items.reduce(
+    (a,b)=>a + Number(b.store_qty || 0),
+    0
+  );
 }
 
 function renderStock(items){
@@ -279,7 +285,8 @@ function renderStock(items){
   grid.innerHTML = items.map(item=>{
 
     const total =
-      item.home_qty + item.store_qty;
+     Number(item.home_qty || 0) +
+     Number(item.store_qty || 0);
 
     let statusClass = "good";
 
@@ -556,33 +563,55 @@ async function deleteItem(id){
   const json = await res.json();
 
   if(!json.success){
-    alert(json.error);
+    alert(json.error || "SERVER ERROR");
     return;
   }
 
-  loadDashboard();
+  STOCK = json.data || [];
 }
 
 async function loadLogs(){
 
-  const res = await fetch("/api/log");
-  const json = await res.json();
+  try{
 
-  const logs =
-    document.getElementById("logs");
+    const res =
+      await fetch("/api/log");
 
-  logs.innerHTML =
-    json.data.map(log=>`
-      <div class="log-item">
-        📦 STOCK #${log.stock_id}
-        |
-        ${log.action}
-        |
-        ${log.qty}
-        |
-        ${log.note}
-      </div>
-    `).join("");
+    const json =
+      await res.json();
+
+    const data =
+      json.data || [];
+
+    const logs =
+      document.getElementById("logs");
+
+    logs.innerHTML =
+      data.map(log=>`
+
+        <div class="log-item">
+
+          📦 STOCK #${log.stock_id}
+          |
+          ${log.action}
+          |
+          ${log.qty}
+          |
+          ${log.note}
+
+        </div>
+
+      `).join("");
+
+  }catch(err){
+
+    console.error(err);
+
+    document.getElementById(
+      "logs"
+    ).innerHTML =
+      "LOG LOAD ERROR";
+  }
 }
 
 document
