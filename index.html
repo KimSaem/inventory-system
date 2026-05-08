@@ -100,25 +100,10 @@ button:hover{
   opacity:0.9;
 }
 
-.add-btn{
-  background:#0071e3;
-  color:white;
-}
-
-.delete-btn{
-  background:#ff3b30;
-  color:white;
-}
-
-.home-btn{
-  background:#0071e3;
-  color:white;
-}
-
-.store-btn{
-  background:#34c759;
-  color:white;
-}
+.add-btn{ background:#0071e3; color:white; }
+.delete-btn{ background:#ff3b30; color:white; }
+.home-btn{ background:#0071e3; color:white; }
+.store-btn{ background:#34c759; color:white; }
 
 .grid{
   display:grid;
@@ -153,6 +138,7 @@ button:hover{
   display:flex;
   gap:10px;
   margin-top:15px;
+  flex-wrap:wrap;
 }
 
 .logs{
@@ -167,17 +153,9 @@ button:hover{
   box-shadow:0 5px 20px rgba(0,0,0,0.04);
 }
 
-.low{
-  color:#ff3b30;
-}
-
-.medium{
-  color:#ff9500;
-}
-
-.good{
-  color:#34c759;
-}
+.low{ color:#ff3b30; }
+.medium{ color:#ff9500; }
+.good{ color:#34c759; }
 
 </style>
 </head>
@@ -205,25 +183,15 @@ button:hover{
 
 </div>
 
-<input
-  type="text"
-  id="search"
-  class="search"
-  placeholder="Search inventory..."
-/>
-
+<input type="text" id="search" class="search" placeholder="Search inventory..." />
 
 <div class="add-box">
 
   <input id="newName" placeholder="Item name">
-
   <input id="newHome" type="number" placeholder="Home qty">
-
   <input id="newStore" type="number" placeholder="Store qty">
 
-  <button class="add-btn" onclick="createItem()">
-    Add Item
-  </button>
+  <button class="add-btn" onclick="createItem()">Add Item</button>
 
 </div>
 
@@ -239,24 +207,9 @@ button:hover{
 let STOCK = [];
 
 async function loadDashboard(){
-
   await loadStock();
   await loadLogs();
 }
-  
-  async function loadSales(){
-
-  const res = await fetch("/api/sales");
-  const json = await res.json();
-
-  const data = json.data || [];
-
-  const totalSales =
-    data.reduce((a,b)=>a + (b.total || 0),0);
-
-  console.log("TOTAL SALES:", totalSales);
-}
-  
 
 async function loadStock(){
 
@@ -276,51 +229,45 @@ async function loadStock(){
 
 function updateKPI(items){
 
-  document.getElementById("totalItems").innerText =
-    items.length;
+  document.getElementById("totalItems").innerText = items.length;
 
   document.getElementById("homeStock").innerText =
-  items.reduce(
-    (a,b)=>a + Number(b.home_qty || 0),
-    0
-  );
+    items.reduce((a,b)=>a + Number(b.home_qty || 0),0);
 
-document.getElementById("storeStock").innerText =
-  items.reduce(
-    (a,b)=>a + Number(b.store_qty || 0),
-    0
-  );
+  document.getElementById("storeStock").innerText =
+    items.reduce((a,b)=>a + Number(b.store_qty || 0),0);
 }
 
 function renderStock(items){
 
   const grid = document.getElementById("stockGrid");
-
   if(!items) items = [];
 
   grid.innerHTML = items.map(item => {
 
-
-    const total = Number(item.home_qty || 0) + Number(item.store_qty || 0);
+    const total =
+      Number(item.home_qty || 0) +
+      Number(item.store_qty || 0);
 
     let statusClass = "good";
     let warningText = "";
 
-    if (total <= 5) {
+    if(total <= 5){
       statusClass = "low";
       warningText = "⚠ LOW STOCK";
     }
-    else if (item.store_qty <= 1) {
+    else if(item.store_qty <= 1){
       statusClass = "low";
       warningText = "⚠ STORE LOW";
     }
-    else if (item.home_qty <= 5) {
+    else if(item.home_qty <= 5){
       statusClass = "medium";
       warningText = "⚠ HOME LOW";
     }
 
-    if (total <= 5) statusClass = "low";
-    else if (total <= 15 && statusClass !== "low") statusClass = "medium";
+    if(total > 5 && total <= 15 && statusClass !== "low"){
+      statusClass = "medium";
+    }
 
     return `
       <div class="stock-card">
@@ -345,19 +292,10 @@ function renderStock(items){
         </div>
 
         ${warningText ? `
-  <div style="
-    margin-top:10px;
-    padding:6px 10px;
-    border-radius:12px;
-    background:#fff3f3;
-    color:#ff3b30;
-    font-size:12px;
-    font-weight:600;
-    display:inline-block;
-  ">
-    ${warningText}
-  </div>
-` : ""}
+          <div style="margin-top:10px;padding:6px 10px;border-radius:12px;background:#fff3f3;color:#ff3b30;font-size:12px;font-weight:600;display:inline-block;">
+            ${warningText}
+          </div>
+        ` : ""}
 
         <input type="number" id="qty-${item.id}" value="1" min="1"/>
 
@@ -385,46 +323,11 @@ function renderStock(items){
   }).join("");
 }
 
-async function move(stock_id, from, to){
-
-  const qty =
-    parseInt(
-      document.getElementById(`qty-${stock_id}`).value
-    );
-
-  const res = await fetch("/api/transfer",{
-    method:"POST",
-    headers:{
-      "Content-Type":"application/json"
-    },
-    body:JSON.stringify({
-      stock_id,
-      qty,
-      from,
-      to
-    })
-  });
-
-  const json = await res.json();
-
-  if(!json.success){
-    alert(json.error);
-    return;
-  }
-
-  loadDashboard();
-}
-
 async function createItem(){
 
-  const name =
-    document.getElementById("newName").value;
-
-  const home_qty =
-    parseInt(document.getElementById("newHome").value || 0);
-
-  const store_qty =
-    parseInt(document.getElementById("newStore").value || 0);
+  const name = document.getElementById("newName").value;
+  const home_qty = Number(document.getElementById("newHome").value || 0);
+  const store_qty = Number(document.getElementById("newStore").value || 0);
 
   if(!name){
     alert("상품명 입력");
@@ -433,14 +336,8 @@ async function createItem(){
 
   const res = await fetch("/api/item",{
     method:"POST",
-    headers:{
-      "Content-Type":"application/json"
-    },
-    body:JSON.stringify({
-      name,
-      home_qty,
-      store_qty
-    })
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({name,home_qty,store_qty})
   });
 
   const json = await res.json();
@@ -450,42 +347,25 @@ async function createItem(){
     return;
   }
 
-  document.getElementById("newName").value = "";
-  document.getElementById("newHome").value = "";
-  document.getElementById("newStore").value = "";
+  document.getElementById("newName").value="";
+  document.getElementById("newHome").value="";
+  document.getElementById("newStore").value="";
 
   loadDashboard();
 }
+
 async function adjustStock(stock_id){
 
-  const home_qty =
-    Number(
-      document.getElementById(
-        `home-adjust-${stock_id}`
-      ).value
-    );
-
-  const store_qty =
-    Number(
-      document.getElementById(
-        `store-adjust-${stock_id}`
-      ).value
-    );
+  const home_qty = Number(document.getElementById(`home-adjust-${stock_id}`).value);
+  const store_qty = Number(document.getElementById(`store-adjust-${stock_id}`).value);
 
   const res = await fetch("/api/adjust",{
     method:"POST",
-    headers:{
-      "Content-Type":"application/json"
-    },
-    body:JSON.stringify({
-      stock_id,
-      home_qty,
-      store_qty
-    })
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({stock_id,home_qty,store_qty})
   });
 
-  const json =
-    await res.json();
+  const json = await res.json();
 
   if(!json.success){
     alert(json.error);
@@ -497,31 +377,15 @@ async function adjustStock(stock_id){
 
 async function sellItem(stock_id){
 
-  const qty =
-    parseInt(
-      document.getElementById(
-        `qty-${stock_id}`
-      ).value
-    );
-
-  if(!qty || qty <= 0){
-    alert("수량 오류");
-    return;
-  }
+  const qty = Number(document.getElementById(`qty-${stock_id}`).value);
 
   const res = await fetch("/api/order",{
     method:"POST",
-    headers:{
-      "Content-Type":"application/json"
-    },
-    body:JSON.stringify({
-      stock_id,
-      qty
-    })
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({stock_id,qty})
   });
 
-  const json =
-    await res.json();
+  const json = await res.json();
 
   if(!json.success){
     alert(json.error);
@@ -530,97 +394,78 @@ async function sellItem(stock_id){
 
   loadDashboard();
 }
-  
+
+async function move(stock_id, from, to){
+
+  const qty = Number(document.getElementById(`qty-${stock_id}`).value);
+
+  const res = await fetch("/api/transfer",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({stock_id,qty,from,to})
+  });
+
+  const json = await res.json();
+
+  if(!json.success){
+    alert(json.error);
+    return;
+  }
+
+  loadDashboard();
+}
+
 async function deleteItem(id){
 
   if(!confirm("삭제할까?")) return;
 
   const res = await fetch("/api/item",{
     method:"DELETE",
-    headers:{
-      "Content-Type":"application/json"
-    },
-    body:JSON.stringify({ id })
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({id})
   });
 
   const json = await res.json();
 
   if(!json.success){
-    alert(json.error || "SERVER ERROR");
+    alert(json.error);
     return;
   }
 
-  loadDashboard(); // 이게 핵심
+  loadDashboard();
 }
 
 async function loadLogs(){
 
-  try{
+  const res = await fetch("/api/log");
+  const json = await res.json();
 
-    const res =
-      await fetch("/api/log");
+  const data = json.data || [];
 
-    const json =
-      await res.json();
-
-    const data =
-      json.data || [];
-
-    const logs =
-      document.getElementById("logs");
-
-    logs.innerHTML =
-      data.map(log=>`
-
-        <div class="log-item">
-
-          📦 STOCK #${log.stock_id}
-          |
-          ${log.action}
-          |
-          ${log.qty}
-          |
-          ${log.note}
-
-        </div>
-
-      `).join("");
-
-  }catch(err){
-
-    console.error(err);
-
-    document.getElementById(
-      "logs"
-    ).innerHTML =
-      "LOG LOAD ERROR";
-  }
+  document.getElementById("logs").innerHTML =
+    data.map(log=>`
+      <div class="log-item">
+        📦 STOCK #${log.stock_id} | ${log.action} | ${log.qty} | ${log.note}
+      </div>
+    `).join("");
 }
 
-document
-  .getElementById("search")
-  .addEventListener("input",(e)=>{
+document.getElementById("search").addEventListener("input",(e)=>{
 
-    const keyword =
-      e.target.value.toLowerCase();
+  const keyword = e.target.value.toLowerCase();
 
-    const filtered =
-      STOCK.filter(i=>
-        i.name.toLowerCase().includes(keyword)
-      );
+  const filtered = STOCK.filter(i =>
+    i.name.toLowerCase().includes(keyword)
+  );
 
-    renderStock(filtered);
-  });
+  renderStock(filtered);
+});
 
 loadDashboard();
-  // 1. 실시간 동기화 (전체 리프레시)
-setInterval(() => {
-  loadStock();
-}, 5000);
 
-setInterval(() => {
-  loadLogs();
-}, 15000);
+// auto refresh
+setInterval(loadStock, 5000);
+setInterval(loadLogs, 10000);
 
 </script>
 
