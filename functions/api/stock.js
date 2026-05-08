@@ -1,17 +1,31 @@
 import { createDB } from "../db/client.js";
-import { getStock } from "../services/stockService.js";
 
 export async function onRequest(context){
 
   try{
 
-    const db = createDB(context.env);
+    const db =
+      createDB(context.env);
 
-    const stock = await getStock(db);
+    const result =
+      await db
+        .prepare(`
+          SELECT
+            id,
+            name,
+            home_qty,
+            store_qty,
+            supplier,
+            min_stock,
+            ai_enabled
+          FROM stock
+          ORDER BY id DESC
+        `)
+        .all();
 
     return Response.json({
       success:true,
-      data:stock
+      data: result.results || []
     });
 
   }catch(e){
