@@ -211,9 +211,7 @@ button:hover{
   class="search"
   placeholder="Search inventory..."
 />
-  <div class="${statusClass}">
-  ${warningText}
-</div>
+
 
 <div class="add-box">
 
@@ -295,56 +293,51 @@ document.getElementById("storeStock").innerText =
 }
 
 function renderStock(items){
-  const LOW_HOME = 5;
-  const LOW_STORE = 1;
-  let statusClass = "good";
-  let warningText = "";
 
-  if(item.store_qty <= LOW_STORE){
-    statusClass = "low";
-    warningText = "⚠ STORE LOW";
-  }
-  else if(item.home_qty <= LOW_HOME){
-    statusClass = "medium";
-    warningText = "⚠ HOME LOW";
-  }
+  const grid = document.getElementById("stockGrid");
 
-  const grid =
-    document.getElementById("stockGrid");
+  if(!items) items = [];
 
-  grid.innerHTML = items.map(item=>{
+  grid.innerHTML = items.map(item => {
 
-    const total =
-     Number(item.home_qty || 0) +
-     Number(item.store_qty || 0);
 
     let statusClass = "good";
+    let warningText = "";
 
-    if(total <= 5){
+    const total = Number(item.home_qty || 0) + Number(item.store_qty || 0);
+
+    let statusClass = "good";
+    let warningText = "";
+
+    if (total <= 5) {
       statusClass = "low";
-    }else if(total <= 15){
-      statusClass = "medium";
+      warningText = "⚠ LOW STOCK";
     }
+    else if (item.store_qty <= 1) {
+      statusClass = "low";
+      warningText = "⚠ STORE LOW";
+    }
+    else if (item.home_qty <= 5) {
+      statusClass = "medium";
+      warningText = "⚠ HOME LOW";
+    }
+
+    if (total <= 5) statusClass = "low";
+    else if (total <= 15 && statusClass !== "low") statusClass = "medium";
 
     return `
       <div class="stock-card">
 
-        <div class="stock-title">
-          ${item.name}
-        </div>
+        <div class="stock-title">${item.name}</div>
 
         <div class="row">
           <span>🏠 Home</span>
-          <span class="qty">
-            ${item.home_qty}
-          </span>
+          <span class="qty">${item.home_qty}</span>
         </div>
 
         <div class="row">
           <span>🏪 Store</span>
-          <span class="qty">
-            ${item.store_qty}
-          </span>
+          <span class="qty">${item.store_qty}</span>
         </div>
 
         <div class="row">
@@ -354,73 +347,40 @@ function renderStock(items){
           </span>
         </div>
 
-        <input
-          type="number"
-          id="qty-${item.id}"
-          value="1"
-          min="1"
-        />
+        ${warningText ? `
+  <div style="
+    margin-top:10px;
+    padding:6px 10px;
+    border-radius:12px;
+    background:#fff3f3;
+    color:#ff3b30;
+    font-size:12px;
+    font-weight:600;
+    display:inline-block;
+  ">
+    ${warningText}
+  </div>
+` : ""}
+
+        <input type="number" id="qty-${item.id}" value="1" min="1"/>
 
         <div class="actions">
-
-  <input
-    type="number"
-    id="home-adjust-${item.id}"
-    value="${item.home_qty}"
-  >
-
-  <input
-    type="number"
-    id="store-adjust-${item.id}"
-    value="${item.store_qty}"
-  >
-
-</div>
-
-        <div class="actions">
-
-        <button
-          class="add-btn"
-          onclick="adjustStock(${item.id})"
-         >
-          Adjust
-        </button>
-
-        <button
-          class="store-btn"
-          onclick="sellItem(${item.id})"
-        >
-          Sell
-        </button>
-
-      </div>
-        <div class="actions">
-
-          <button
-            class="home-btn"
-            onclick="move(${item.id}, 'home', 'store')"
-          >
-            Home → Store
-          </button>
-
-          <button
-            class="store-btn"
-            onclick="move(${item.id}, 'store', 'home')"
-          >
-            Store → Home
-          </button>
-
+          <input type="number" id="home-adjust-${item.id}" value="${item.home_qty}">
+          <input type="number" id="store-adjust-${item.id}" value="${item.store_qty}">
         </div>
 
         <div class="actions">
+          <button class="add-btn" onclick="adjustStock(${item.id})">Adjust</button>
+          <button class="store-btn" onclick="sellItem(${item.id})">Sell</button>
+        </div>
 
-          <button
-            class="delete-btn"
-            onclick="deleteItem(${item.id})"
-          >
-            Delete
-          </button>
+        <div class="actions">
+          <button class="home-btn" onclick="move(${item.id}, 'home', 'store')">Home → Store</button>
+          <button class="store-btn" onclick="move(${item.id}, 'store', 'home')">Store → Home</button>
+        </div>
 
+        <div class="actions">
+          <button class="delete-btn" onclick="deleteItem(${item.id})">Delete</button>
         </div>
 
       </div>
@@ -576,18 +536,14 @@ async function sellItem(stock_id){
   
 async function deleteItem(id){
 
-  if(!confirm("삭제할까?")){
-    return;
-  }
+  if(!confirm("삭제할까?")) return;
 
   const res = await fetch("/api/item",{
     method:"DELETE",
     headers:{
       "Content-Type":"application/json"
     },
-    body:JSON.stringify({
-      id
-    })
+    body:JSON.stringify({ id })
   });
 
   const json = await res.json();
@@ -597,7 +553,7 @@ async function deleteItem(id){
     return;
   }
 
-  STOCK = json.data || [];
+  loadDashboard(); // 이게 핵심
 }
 
 async function loadLogs(){
@@ -660,6 +616,9 @@ document
   });
 
 loadDashboard();
+  // 1. 실시간 동기화 (전체 리프레시)
+setInterval(loadStock, 5000);
+setInterval(loadLogs, 10000);
 
 </script>
 
