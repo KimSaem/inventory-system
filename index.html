@@ -326,6 +326,39 @@ function renderStock(items){
 
         <div class="actions">
 
+  <input
+    type="number"
+    id="home-adjust-${item.id}"
+    value="${item.home_qty}"
+  >
+
+  <input
+    type="number"
+    id="store-adjust-${item.id}"
+    value="${item.store_qty}"
+  >
+
+</div>
+
+        <div class="actions">
+
+        <button
+          class="add-btn"
+          onclick="adjustStock(${item.id})"
+         >
+          Adjust
+        </button>
+
+        <button
+          class="store-btn"
+          onclick="sellItem(${item.id})"
+        >
+          Sell
+        </button>
+
+      </div>
+        <div class="actions">
+
           <button
             class="home-btn"
             onclick="move(${item.id}, 'home', 'store')"
