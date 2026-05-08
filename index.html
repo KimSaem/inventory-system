@@ -201,6 +201,13 @@ button:hover{
 <h1>📦 Inventory ERP AI</h1>
 
 <div class="topbar">
+  <button class="add-btn" onclick="runAI()">
+    🤖 AI Predict
+  </button>
+
+  <button class="store-btn" onclick="generateOrders()">
+    📦 Generate Orders
+  </button>
 
   <div class="card kpi">
     <div class="kpi-title">TOTAL ITEMS</div>
@@ -740,6 +747,57 @@ async function loadLogs(){
     `).join("");
 }
 
+async function runAI(){
+
+  const res =
+    await fetch("/api/ai-predict");
+
+  const json =
+    await res.json();
+
+  if(!json.success){
+    alert(json.error);
+    return;
+  }
+
+  alert("AI prediction completed");
+
+  loadDashboard();
+}
+
+async function generateOrders(){
+
+  const res =
+    await fetch("/api/generate-order");
+
+  const json =
+    await res.json();
+
+  if(!json.success){
+    alert(json.error);
+    return;
+  }
+
+  console.log(json.orders);
+
+  let text = "";
+
+  for(const supplier in json.orders){
+
+    text += `\n====================\n`;
+    text += `📦 ${supplier}\n`;
+    text += `====================\n`;
+
+    json.orders[supplier]
+      .forEach(i=>{
+
+        text += `${i.name} x ${i.qty}\n`;
+
+      });
+  }
+
+  alert(text || "발주 없음");
+}
 document
   .getElementById("search")
   .addEventListener("input",(e)=>{
