@@ -12,6 +12,29 @@
 </head>
 
 <body>
+  <div class="category-tabs">
+
+  <button onclick="filterCategory('ALL')">
+    ALL
+  </button>
+
+  <button onclick="filterCategory('NIGIRI')">
+    NIGIRI
+  </button>
+
+  <button onclick="filterCategory('ROLL')">
+    ROLL
+  </button>
+
+  <button onclick="filterCategory('DONBURI')">
+    DONBURI
+  </button>
+
+  <button onclick="filterCategory('DRINK')">
+    DRINK
+  </button>
+
+</div>
 
 <div class="container">
 
@@ -121,22 +144,32 @@ function addToCart(id){
 
   if(!item) return;
 
-  const exist =
-    CART.find(i=>i.id===id);
+  let selectedOption = "";
 
-  if(exist){
+  try{
 
-    exist.qty++;
+    const options =
+      JSON.parse(item.options || "[]");
 
-  }else{
+    if(options.length > 0){
 
-    CART.push({
-      id:item.id,
-      name:item.name,
-      price:Number(item.price || 5),
-      qty:1
-    });
+      selectedOption = prompt(
+        `OPTIONS:\n\n${options.join("\n")}`,
+        options[0]
+      ) || "";
+    }
+
+  }catch(e){
+    console.log(e);
   }
+
+  CART.push({
+    id:item.id,
+    name:item.name,
+    price:Number(item.price || 5),
+    qty:1,
+    option:selectedOption
+  });
 
   renderCart();
 }
@@ -153,6 +186,10 @@ function renderCart(){
           <div class="cart-name">
             ${item.name}
           </div>
+          <div class="cart-option">
+            ${item.option || ''}
+          </div>
+          
 
           <div class="cart-price">
             $${item.price}
