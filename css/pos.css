@@ -174,3 +174,30 @@ body{
 .pay-btn:hover{
   opacity:0.9;
 }
+
+.category-tabs{
+  display:flex;
+  gap:10px;
+  margin-bottom:20px;
+  flex-wrap:wrap;
+}
+
+.category-tabs button{
+  padding:12px 18px;
+  border:none;
+  border-radius:14px;
+  background:#1e293b;
+  color:white;
+  cursor:pointer;
+  font-weight:700;
+}
+
+.category-tabs button:hover{
+  background:#3b82f6;
+}
+
+.cart-option{
+  opacity:0.6;
+  font-size:13px;
+  margin-top:4px;
+}
