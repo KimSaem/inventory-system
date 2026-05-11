@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+<title>SUSHI POS</title>
+
+<link rel="stylesheet" href="/css/pos.css">
+
+</head>
+
+<body>
+
+<div class="container">
+
+  <!-- LEFT -->
+  <div class="left">
+
+    <div class="topbar">
+
+      <h1>🍣 SUSHI POS</h1>
+
+      <input
+        id="search"
+        placeholder="Search menu..."
+      />
+
+    </div>
+
+    <div id="menuGrid" class="menu-grid"></div>
+
+  </div>
+
+  <!-- RIGHT -->
+  <div class="right">
+
+    <div class="cart-header">
+      🛒 ORDER
+    </div>
+
+    <div id="cart" class="cart"></div>
+
+    <div class="summary">
+
+      <div class="summary-row">
+        <span>Items</span>
+        <span id="itemCount">0</span>
+      </div>
+
+      <div class="summary-row total">
+        <span>Total</span>
+        <span id="totalPrice">$0</span>
+      </div>
+
+      <button class="pay-btn" onclick="checkout()">
+        PAY NOW
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+
+let MENU = [];
+let CART = [];
+
+async function loadMenu(){
+
+  const res =
+    await fetch("/api/stock");
+
+  const json =
+    await res.json();
+
+  MENU = json.data || [];
+
+  renderMenu(MENU);
+}
+
+function renderMenu(items){
+
+  document.getElementById("menuGrid").innerHTML =
+    items.map(item => `
+
+      <div
+        class="menu-item"
+        onclick="addToCart(${item.id})"
+      >
+
+        <div class="menu-name">
+          ${item.name}
+        </div>
+
+        <div class="menu-stock">
+          Stock:
+          ${
+            Number(item.home_qty||0) +
+            Number(item.store_qty||0)
+          }
+        </div>
+
+        <div class="menu-price">
+          $
+          ${Number(item.price || 5).toFixed(2)}
+        </div>
+
+      </div>
+
+    `).join("");
+}
+
+function addToCart(id){
+
+  const item =
+    MENU.find(i=>i.id===id);
+
+  if(!item) return;
+
+  const exist =
+    CART.find(i=>i.id===id);
+
+  if(exist){
+
+    exist.qty++;
+
+  }else{
+
+    CART.push({
+      id:item.id,
+      name:item.name,
+      price:Number(item.price || 5),
+      qty:1
+    });
+  }
+
+  renderCart();
+}
+
+function renderCart(){
+
+  document.getElementById("cart").innerHTML =
+    CART.map(item=>`
+
+      <div class="cart-item">
+
+        <div>
+
+          <div class="cart-name">
+            ${item.name}
+          </div>
+
+          <div class="cart-price">
+            $${item.price}
+          </div>
+
+        </div>
+
+        <div class="cart-controls">
+
+          <button onclick="decrease(${item.id})">
+            -
+          </button>
+
+          <span>${item.qty}</span>
+
+          <button onclick="increase(${item.id})">
+            +
+          </button>
+
+        </div>
+
+      </div>
+
+    `).join("");
+
+  updateSummary();
+}
+
+function increase(id){
+
+  const item =
+    CART.find(i=>i.id===id);
+
+  if(item){
+    item.qty++;
+  }
+
+  renderCart();
+}
+
+function decrease(id){
+
+  const item =
+    CART.find(i=>i.id===id);
+
+  if(!item) return;
+
+  item.qty--;
+
+  if(item.qty <= 0){
+
+    CART =
+      CART.filter(i=>i.id!==id);
+  }
+
+  renderCart();
+}
+
+function updateSummary(){
+
+  const totalItems =
+    CART.reduce((a,b)=>a+b.qty,0);
+
+  const totalPrice =
+    CART.reduce(
+      (a,b)=>a+(b.qty*b.price),
+      0
+    );
+
+  document.getElementById("itemCount")
+    .innerText = totalItems;
+
+  document.getElementById("totalPrice")
+    .innerText =
+      "$" + totalPrice.toFixed(2);
+}
+
+async function checkout(){
+
+  if(CART.length === 0){
+    alert("Cart empty");
+    return;
+  }
+
+  for(const item of CART){
+
+    await fetch("/api/order",{
+
+      method:"POST",
+
+      headers:{
+        "Content-Type":"application/json"
+      },
+
+      body:JSON.stringify({
+        stock_id:item.id,
+        qty:item.qty
+      })
+
+    });
+  }
+
+  alert("Payment Complete");
+
+  CART = [];
+
+  renderCart();
+
+  loadMenu();
+}
+
+document
+  .getElementById("search")
+  .addEventListener("input",(e)=>{
+
+    const keyword =
+      e.target.value.toLowerCase();
+
+    const filtered =
+      MENU.filter(i=>
+        i.name.toLowerCase()
+        .includes(keyword)
+      );
+
+    renderMenu(filtered);
+  });
+
+loadMenu();
+
+</script>
+
+</body>
+</html>
