@@ -111,3 +111,25 @@ h1{
 .logs{
   margin-top:40px;
 }
+/* INPUT TEXT FIX */
+
+input,
+select{
+  color:#ffffff;
+  caret-color:#ffffff;
+}
+
+/* placeholder */
+
+input::placeholder{
+  color:rgba(255,255,255,0.45);
+}
+
+/* chrome autofill fix */
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus{
+  -webkit-text-fill-color:#ffffff;
+  transition: background-color 9999s ease-in-out 0s;
+}
