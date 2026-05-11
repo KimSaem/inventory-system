@@ -1,29 +1,5 @@
 import { createDB } from "../db/client.js";
 
-export async function onRequest(context){
-
-  try{
-
-    const db =
-      createDB(context.env);
-
-    const method =
-      context.request.method;
-
-    const body =
-      await context.request.json()
-      .catch(()=>({}));
-
-
-    // =========================
-    // CREATE ITEM
-    // =========================
-    if(method === "POST"){
-
-      if(!body.name){
-        throw new Error("NAME_REQUIRED");
-      }
-
       await db
         .prepare(`
           INSERT INTO stock (
@@ -31,16 +7,22 @@ export async function onRequest(context){
             home_qty,
             store_qty,
             supplier,
+            category,
+            price,
+            options,
             min_stock,
             ai_enabled
           )
-          VALUES (?, ?, ?, ?, ?, ?)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         `)
         .bind(
           body.name,
           body.home_qty || 0,
           body.store_qty || 0,
           body.supplier || "미지정",
+          body.category || "SUSHI",
+          body.price || 5,
+          JSON.stringify(body.options || []),
           body.min_stock || 15,
           body.ai_enabled ? 1 : 0
         )
@@ -51,40 +33,6 @@ export async function onRequest(context){
       });
     }
 
-
-    // =========================
-    // UPDATE ITEM
-    // =========================
-    if(method === "PUT"){
-
-      await db
-        .prepare(`
-          UPDATE stock
-          SET
-            name = ?,
-            supplier = ?,
-            min_stock = ?,
-            ai_enabled = ?
-          WHERE id = ?
-        `)
-        .bind(
-          body.name,
-          body.supplier,
-          body.min_stock,
-          body.ai_enabled ? 1 : 0,
-          body.id
-        )
-        .run();
-
-      return Response.json({
-        success:true
-      });
-    }
-
-
-    // =========================
-    // DELETE ITEM
-    // =========================
     if(method === "DELETE"){
 
       await db
@@ -100,10 +48,8 @@ export async function onRequest(context){
       });
     }
 
-
     return Response.json({
-      success:false,
-      error:"METHOD_NOT_ALLOWED"
+      success:false
     });
 
   }catch(e){
@@ -111,8 +57,6 @@ export async function onRequest(context){
     return Response.json({
       success:false,
       error:e.message
-    },{
-      status:400
     });
   }
 }
