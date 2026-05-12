@@ -3,53 +3,90 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>SUSHI POS</title>
+<title>SUSHI POS PRO</title>
 
 <link rel="stylesheet" href="/css/pos.css">
+
+<style>
+body{
+  margin:0;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  background:#f5f5f7;
+}
+
+.container{
+  display:flex;
+  height:100vh;
+}
+
+.left{
+  flex:2;
+  padding:20px;
+  overflow:auto;
+}
+
+.right{
+  flex:1;
+  background:white;
+  padding:20px;
+  border-left:1px solid #eee;
+}
+
+.menu-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+  gap:12px;
+}
+
+.menu-item{
+  background:white;
+  border-radius:16px;
+  padding:14px;
+  box-shadow:0 5px 15px rgba(0,0,0,0.05);
+  cursor:pointer;
+}
+
+.menu-name{
+  font-weight:700;
+}
+
+.menu-price{
+  color:#0071e3;
+  margin-top:6px;
+}
+
+.cart-item{
+  display:flex;
+  justify-content:space-between;
+  padding:10px 0;
+  border-bottom:1px solid #eee;
+}
+
+.pay-btn{
+  width:100%;
+  padding:14px;
+  background:#111;
+  color:white;
+  border:none;
+  border-radius:12px;
+  font-size:16px;
+  margin-top:20px;
+  cursor:pointer;
+}
+</style>
 
 </head>
 
 <body>
-
-<div class="category-tabs">
-
-  <button onclick="filterCategory('ALL')">ALL</button>
-  <button onclick="filterCategory('NIGIRI')">NIGIRI</button>
-  <button onclick="filterCategory('ROLL')">ROLL</button>
-  <button onclick="filterCategory('DONBURI')">DONBURI</button>
-  <button onclick="filterCategory('DRINK')">DRINK</button>
-  <button onclick="filterCategory('SIDE')">SIDE</button>
-
-</div>
 
 <div class="container">
 
   <!-- LEFT -->
   <div class="left">
 
-    <div class="topbar">
-      <h1>🍣 SUSHI POS</h1>
+    <h2>🍣 SUSHI POS</h2>
 
-      <input id="search" placeholder="Search menu..." />
-    </div>
-
-    <!-- CREATE ITEM (POS에서도 추가 가능하게 유지) -->
-    <div class="create-box">
-
-      <input id="newName" placeholder="Name">
-      <input id="newPrice" type="number" placeholder="Price">
-
-      <select id="newCategory">
-        <option value="NIGIRI">NIGIRI</option>
-        <option value="ROLL">ROLL</option>
-        <option value="DONBURI">DONBURI</option>
-        <option value="DRINK">DRINK</option>
-        <option value="SIDE">SIDE</option>
-      </select>
-
-      <button onclick="createItem()">+ Add</button>
-
-    </div>
+    <input id="search" placeholder="Search menu..." />
 
     <div id="menuGrid" class="menu-grid"></div>
 
@@ -58,27 +95,21 @@
   <!-- RIGHT -->
   <div class="right">
 
-    <div class="cart-header">🛒 ORDER</div>
+    <h3>🛒 CART</h3>
 
-    <div id="cart" class="cart"></div>
+    <div id="cart"></div>
 
-    <div class="summary">
-
-      <div class="summary-row">
-        <span>Items</span>
-        <span id="itemCount">0</span>
-      </div>
-
-      <div class="summary-row total">
-        <span>Total</span>
-        <span id="totalPrice">$0.00</span>
-      </div>
-
-      <button class="pay-btn" onclick="checkout()">
-        PAY NOW
-      </button>
-
+    <div style="margin-top:10px;">
+      Items: <span id="itemCount">0</span>
     </div>
+
+    <div style="font-weight:700; margin-top:10px;">
+      Total: <span id="totalPrice">$0</span>
+    </div>
+
+    <button class="pay-btn" onclick="checkout()">
+      PAY NOW
+    </button>
 
   </div>
 
@@ -87,212 +118,171 @@
 <script>
 
 let MENU = [];
-let FILTERED_MENU = [];
 let CART = [];
 
-/* ---------------- MENU LOAD ---------------- */
-async function loadMenu() {
+/* =========================
+   LOAD MENU
+========================= */
+async function loadMenu(){
+
   const res = await fetch("/api/stock");
   const json = await res.json();
 
   MENU = json.data || [];
-  FILTERED_MENU = MENU;
 
   renderMenu(MENU);
 }
 
-/* ---------------- RENDER MENU ---------------- */
-function renderMenu(items) {
+/* =========================
+   RENDER MENU
+========================= */
+function renderMenu(items){
 
   document.getElementById("menuGrid").innerHTML =
-    items.map(item => {
-
-      const stock =
-        Number(item.home_qty || 0) +
-        Number(item.store_qty || 0);
-
-      return `
-        <div class="menu-item" onclick="addToCart(${item.id})">
-
-          <div class="menu-name">${item.name}</div>
-
-          <div class="menu-category">
-            ${item.category || "MENU"}
-          </div>
-
-          <div class="menu-stock">
-            Stock: ${stock}
-          </div>
-
-          <div class="menu-price">
-            $${Number(item.price || 5).toFixed(2)}
-          </div>
-
-        </div>
-      `;
-    }).join("");
+    items.map(i => `
+      <div class="menu-item" onclick="addToCart(${i.id})">
+        <div class="menu-name">${i.name}</div>
+        <div class="menu-price">$${Number(i.price || 5)}</div>
+      </div>
+    `).join("");
 }
 
-/* ---------------- FILTER ---------------- */
-function filterCategory(cat) {
-
-  if (cat === "ALL") {
-    FILTERED_MENU = MENU;
-  } else {
-    FILTERED_MENU = MENU.filter(i =>
-      (i.category || "").toUpperCase() === cat
-    );
-  }
-
-  renderMenu(FILTERED_MENU);
-}
-
-/* ---------------- CART ---------------- */
-function addToCart(id) {
+/* =========================
+   ADD TO CART
+========================= */
+function addToCart(id){
 
   const item = MENU.find(i => i.id === id);
-  if (!item) return;
+  if(!item) return;
 
   const existing = CART.find(i => i.id === id);
 
-  if (existing) {
+  if(existing){
     existing.qty++;
-  } else {
+  }else{
     CART.push({
-      id: item.id,
-      name: item.name,
-      price: Number(item.price || 5),
-      qty: 1
+      id:item.id,
+      name:item.name,
+      price:Number(item.price || 5),
+      qty:1
     });
   }
 
   renderCart();
 }
 
-function renderCart() {
+/* =========================
+   CART RENDER
+========================= */
+function renderCart(){
 
   document.getElementById("cart").innerHTML =
     CART.map(i => `
       <div class="cart-item">
+        <div>${i.name}</div>
 
         <div>
-          <div class="cart-name">${i.name}</div>
-          <div class="cart-price">$${i.price}</div>
+          <button onclick="minus(${i.id})">-</button>
+          ${i.qty}
+          <button onclick="plus(${i.id})">+</button>
         </div>
-
-        <div class="cart-controls">
-
-          <button onclick="dec(${i.id})">-</button>
-          <span>${i.qty}</span>
-          <button onclick="inc(${i.id})">+</button>
-
-        </div>
-
       </div>
     `).join("");
 
   updateSummary();
 }
 
-function inc(id){
-  const i = CART.find(x => x.id === id);
-  if(i) i.qty++;
+function plus(id){
+  const item = CART.find(i=>i.id===id);
+  if(item) item.qty++;
   renderCart();
 }
 
-function dec(id){
-  const i = CART.find(x => x.id === id);
-  if(!i) return;
+function minus(id){
+  const item = CART.find(i=>i.id===id);
+  if(!item) return;
 
-  i.qty--;
-
-  if(i.qty <= 0){
-    CART = CART.filter(x => x.id !== id);
+  item.qty--;
+  if(item.qty <= 0){
+    CART = CART.filter(i=>i.id !== id);
   }
 
   renderCart();
 }
 
-/* ---------------- SUMMARY ---------------- */
-function updateSummary() {
+/* =========================
+   SUMMARY
+========================= */
+function updateSummary(){
 
-  const count = CART.reduce((a,b)=>a+b.qty,0);
-  const total = CART.reduce((a,b)=>a+b.qty*b.price,0);
+  const totalItems = CART.reduce((a,b)=>a+b.qty,0);
 
-  document.getElementById("itemCount").innerText = count;
-  document.getElementById("totalPrice").innerText = "$" + total.toFixed(2);
+  const totalPrice = CART.reduce((a,b)=>
+    a + b.qty * b.price
+  ,0);
+
+  document.getElementById("itemCount").innerText = totalItems;
+  document.getElementById("totalPrice").innerText = "$" + totalPrice.toFixed(2);
 }
 
-/* ---------------- CHECKOUT ---------------- */
-async function checkout() {
+/* =========================
+   ENTERPRISE CHECKOUT
+   👉 핵심: /api/sales ONLY
+========================= */
+async function checkout(){
 
-  if (CART.length === 0) return alert("Cart empty");
-
-  for (const i of CART) {
-    await fetch("/api/order", {
-      method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({
-        stock_id: i.id,
-        qty: i.qty
-      })
-    });
-  }
-
-  alert("DONE");
-
-  CART = [];
-  renderCart();
-  loadMenu();
-}
-
-/* ---------------- CREATE ITEM ---------------- */
-async function createItem() {
-
-  const name = document.getElementById("newName").value;
-  const price = Number(document.getElementById("newPrice").value || 5);
-  const category = document.getElementById("newCategory").value;
-
-  const res = await fetch("/api/item", {
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify({
-      name,
-      price,
-      category,
-      home_qty:0,
-      store_qty:0,
-      supplier:"POS",
-      min_stock:15,
-      ai_enabled:true,
-      options:[]
-    })
-  });
-
-  const json = await res.json();
-
-  if(!json.success){
-    alert(json.error);
+  if(CART.length === 0){
+    alert("Cart empty");
     return;
   }
 
-  loadMenu();
+  try{
+
+    const res = await fetch("/api/sales",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json"
+      },
+      body:JSON.stringify({
+        items:CART
+      })
+    });
+
+    const json = await res.json();
+
+    if(!json.success){
+      alert(json.error);
+      return;
+    }
+
+    alert("PAYMENT SUCCESS");
+
+    CART = [];
+    renderCart();
+    loadMenu();
+
+  }catch(e){
+    console.error(e);
+    alert("ERROR");
+  }
 }
 
-/* ---------------- SEARCH ---------------- */
+/* =========================
+   SEARCH
+========================= */
 document.getElementById("search")
-.addEventListener("input", (e)=>{
+.addEventListener("input",(e)=>{
 
   const k = e.target.value.toLowerCase();
 
-  const filtered = FILTERED_MENU.filter(i =>
-    i.name.toLowerCase().includes(k)
+  renderMenu(
+    MENU.filter(i =>
+      i.name.toLowerCase().includes(k)
+    )
   );
 
-  renderMenu(filtered);
 });
 
-/* ---------------- INIT ---------------- */
 loadMenu();
 
 </script>
