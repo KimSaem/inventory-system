@@ -2,110 +2,118 @@ import { createDB } from "../db/client.js";
 
 export async function onRequest(context){
 
-  const db = createDB(context.env);
+  const { env, request } = context;
 
   try{
 
-    const body = await context.request.json();
+    const db = createDB(env);
+
+    if(request.method === "GET"){
+
+      const salesRes = await db
+        .prepare(`
+          SELECT *
+          FROM sales
+          ORDER BY created_at DESC
+          LIMIT 300
+        `)
+        .all();
+
+      return Response.json({
+        success:true,
+        data:salesRes.results || []
+      });
+    }
+
+    if(request.method !== "POST"){
+
+      return Response.json({
+        success:false,
+        error:"METHOD_NOT_ALLOWED"
+      });
+    }
+
+    const body = await request.json();
+
     const items = body.items || [];
 
     if(!Array.isArray(items) || items.length === 0){
+
       return Response.json({
         success:false,
         error:"EMPTY_CART"
-      }, {status:400});
-    }
-
-    // =========================
-    // 1. PRE-CALC
-    // =========================
-    const ids = items.map(i => Number(i.id));
-
-    const stockRes = await db
-      .prepare(`
-        SELECT * FROM stock
-        WHERE id IN (${ids.map(()=>"?").join(",")})
-      `)
-      .bind(...ids)
-      .all();
-
-    const stockMap = new Map();
-    for(const s of stockRes.results){
-      stockMap.set(s.id, s);
+      });
     }
 
     let totalAmount = 0;
-    const receiptItems = [];
 
-    // =========================
-    // 2. PROCESS CART
-    // =========================
-    for(const cart of items){
+    let savedItems = [];
 
-      const id = Number(cart.id);
-      const qty = Number(cart.qty || 1);
+    for(const item of items){
 
-      const stock = stockMap.get(id);
+      const stock_id = Number(item.id);
 
-      if(!stock) continue;
+      const qty = Number(item.qty || 1);
 
-      // STOCK CHECK
-      if(Number(stock.store_qty) < qty){
-        return Response.json({
-          success:false,
-          error:`NOT_ENOUGH_STOCK: ${stock.name}`
-        },{status:400});
-      }
+      const price = Number(item.price || 1.8);
 
-      const newQty =
-        Number(stock.store_qty) - qty;
+      const total_price = qty * price;
 
-      const price =
-        Number(stock.price || 0);
+      totalAmount += total_price;
 
-      const total = price * qty;
-
-      totalAmount += total;
-
-      // =========================
-      // STOCK UPDATE
-      // =========================
-      await db
+      const itemRes = await db
         .prepare(`
-          UPDATE stock
-          SET store_qty = ?
+          SELECT *
+          FROM stock
           WHERE id = ?
         `)
-        .bind(newQty, id)
-        .run();
+        .bind(stock_id)
+        .all();
 
-      // =========================
-      // SALES TABLE
-      // =========================
+      const stockItem =
+        itemRes?.results?.[0];
+
+      if(!stockItem) continue;
+
+      // SALES 저장
       await db
         .prepare(`
           INSERT INTO sales (
             stock_id,
-            item_name,
+            name,
             qty,
             price,
             total_price,
+            category,
             created_at
           )
-          VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+          VALUES (
+            ?, ?, ?, ?, ?, ?,
+            CURRENT_TIMESTAMP
+          )
         `)
         .bind(
-          id,
-          stock.name,
+          stock_id,
+          stockItem.name,
           qty,
           price,
-          total
+          total_price,
+          stockItem.category || "GENERAL"
         )
         .run();
 
-      // =========================
-      // LOG TABLE
-      // =========================
+      // 판매량 학습
+      await db
+        .prepare(`
+          UPDATE stock
+          SET daily_usage =
+            COALESCE(daily_usage,0) + ?
+          WHERE id = ?
+        `)
+        .bind(qty, stock_id)
+        .run();
+
+      // 로그 저장
       await db
         .prepare(`
           INSERT INTO stock_logs (
@@ -114,41 +122,27 @@ export async function onRequest(context){
             qty,
             note
           )
-          VALUES (?, 'SALE', ?, 'POS AUTO SALE')
+          VALUES (?, ?, ?, ?)
         `)
-        .bind(id, qty)
+        .bind(
+          stock_id,
+          "SALE",
+          qty,
+          "POS PAYMENT"
+        )
         .run();
 
-      // =========================
-      // AI FEED
-      // =========================
-      await db
-        .prepare(`
-          UPDATE stock
-          SET daily_usage = COALESCE(daily_usage,0) + ?
-          WHERE id = ?
-        `)
-        .bind(qty, id)
-        .run();
-
-      receiptItems.push({
-        id,
-        name: stock.name,
+      savedItems.push({
+        name:stockItem.name,
         qty,
-        price,
-        total
+        total_price
       });
     }
 
-    // =========================
-    // 3. RESPONSE (POS READY)
-    // =========================
     return Response.json({
       success:true,
-      data:{
-        total_amount: totalAmount,
-        items: receiptItems
-      }
+      total_amount:totalAmount,
+      items:savedItems
     });
 
   }catch(e){
@@ -156,6 +150,6 @@ export async function onRequest(context){
     return Response.json({
       success:false,
       error:e.message
-    },{status:500});
+    });
   }
 }
