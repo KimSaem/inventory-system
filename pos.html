@@ -2,338 +2,12 @@
 <html lang="ko">
 <head>
 
-<meta charset="UTF-8" />
+<meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
-<title>SUSHI POS ENTERPRISE</title>
+<title>OKARA POS</title>
 
-<link rel="stylesheet" href="/css/pos.css">
-
-<style>
-
-:root{
-  --bg:#0b1020;
-  --panel:#131a2e;
-  --card:#1a2338;
-  --cardHover:#24304d;
-
-  --text:#f3f4f6;
-  --muted:#94a3b8;
-
-  --blue:#3b82f6;
-  --green:#22c55e;
-  --red:#ef4444;
-  --orange:#f59e0b;
-}
-
-*{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
-}
-
-body{
-  font-family:-apple-system,BlinkMacSystemFont,sans-serif;
-  background:
-    radial-gradient(circle at top left,#1d2945,#0b1020);
-  color:var(--text);
-  overflow:hidden;
-}
-
-.container{
-  display:flex;
-  height:100vh;
-}
-
-/* =========================
-   LEFT
-========================= */
-
-.left{
-  flex:2;
-  padding:22px;
-  overflow:auto;
-}
-
-.header{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:20px;
-}
-
-.logo{
-  font-size:34px;
-  font-weight:900;
-}
-
-.search-box{
-  width:320px;
-  padding:14px;
-  border:none;
-  border-radius:16px;
-  background:#111827;
-  color:white;
-  font-size:15px;
-}
-
-/* =========================
-   CATEGORY
-========================= */
-
-.categories{
-  display:flex;
-  gap:10px;
-  margin-bottom:20px;
-  flex-wrap:wrap;
-}
-
-.category-btn{
-  border:none;
-  background:#1f2937;
-  color:white;
-  padding:10px 16px;
-  border-radius:14px;
-  font-weight:700;
-  cursor:pointer;
-  transition:0.2s;
-}
-
-.category-btn:hover{
-  background:var(--blue);
-}
-
-/* =========================
-   MENU GRID
-========================= */
-
-.menu-grid{
-  display:grid;
-  grid-template-columns:
-    repeat(auto-fill,minmax(220px,1fr));
-  gap:16px;
-}
-
-.menu-item{
-  background:rgba(255,255,255,0.05);
-  border:1px solid rgba(255,255,255,0.08);
-  border-radius:22px;
-  padding:18px;
-  transition:0.2s;
-  cursor:pointer;
-  position:relative;
-  backdrop-filter:blur(10px);
-}
-
-.menu-item:hover{
-  transform:translateY(-4px);
-  background:rgba(255,255,255,0.08);
-}
-
-.menu-name{
-  font-size:20px;
-  font-weight:800;
-}
-
-.menu-category{
-  margin-top:8px;
-  font-size:12px;
-  color:var(--muted);
-}
-
-.menu-price{
-  margin-top:14px;
-  font-size:26px;
-  font-weight:900;
-  color:#22c55e;
-}
-
-.menu-stock{
-  margin-top:10px;
-  color:var(--muted);
-  font-size:13px;
-}
-
-.out-badge{
-  position:absolute;
-  top:14px;
-  right:14px;
-  background:var(--red);
-  color:white;
-  padding:4px 10px;
-  border-radius:999px;
-  font-size:11px;
-  font-weight:700;
-}
-
-/* =========================
-   RIGHT
-========================= */
-
-.right{
-  width:420px;
-  background:rgba(15,23,42,0.9);
-  border-left:1px solid rgba(255,255,255,0.08);
-  padding:22px;
-  display:flex;
-  flex-direction:column;
-}
-
-.cart-header{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:18px;
-}
-
-.cart-title{
-  font-size:28px;
-  font-weight:900;
-}
-
-.clear-btn{
-  background:var(--red);
-  color:white;
-  border:none;
-  border-radius:10px;
-  padding:8px 12px;
-  cursor:pointer;
-}
-
-.cart{
-  flex:1;
-  overflow:auto;
-}
-
-.cart-item{
-  background:#1e293b;
-  border-radius:18px;
-  padding:14px;
-  margin-bottom:12px;
-}
-
-.cart-top{
-  display:flex;
-  justify-content:space-between;
-}
-
-.cart-name{
-  font-weight:800;
-}
-
-.cart-price{
-  margin-top:6px;
-  color:var(--muted);
-  font-size:14px;
-}
-
-.cart-controls{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  margin-top:12px;
-}
-
-.cart-controls button{
-  width:34px;
-  height:34px;
-  border:none;
-  border-radius:12px;
-  background:#334155;
-  color:white;
-  font-size:18px;
-  cursor:pointer;
-}
-
-.summary{
-  border-top:1px solid rgba(255,255,255,0.08);
-  padding-top:16px;
-}
-
-.summary-row{
-  display:flex;
-  justify-content:space-between;
-  margin-bottom:12px;
-}
-
-.total{
-  font-size:30px;
-  font-weight:900;
-}
-
-.pay-btn{
-  width:100%;
-  border:none;
-  border-radius:18px;
-  padding:18px;
-  margin-top:20px;
-  font-size:20px;
-  font-weight:900;
-  background:
-    linear-gradient(
-      135deg,
-      #22c55e,
-      #16a34a
-    );
-  color:white;
-  cursor:pointer;
-}
-
-.pay-btn:hover{
-  opacity:0.9;
-}
-
-/* =========================
-   ADMIN PANEL
-========================= */
-
-.admin-panel{
-  margin-top:18px;
-  padding:16px;
-  background:#111827;
-  border-radius:18px;
-}
-
-.admin-panel h3{
-  margin-bottom:12px;
-}
-
-.admin-panel input,
-.admin-panel select{
-  width:100%;
-  margin-bottom:10px;
-  padding:12px;
-  border:none;
-  border-radius:12px;
-  background:#1f2937;
-  color:white;
-}
-
-.admin-actions{
-  display:flex;
-  gap:10px;
-}
-
-.admin-actions button{
-  flex:1;
-  border:none;
-  border-radius:12px;
-  padding:12px;
-  font-weight:700;
-  cursor:pointer;
-}
-
-.add-btn{
-  background:var(--green);
-  color:white;
-}
-
-.update-btn{
-  background:var(--blue);
-  color:white;
-}
-
-</style>
+<link rel="stylesheet" href="/css/pos.css"/>
 
 </head>
 
@@ -344,51 +18,56 @@ body{
   <!-- LEFT -->
   <div class="left">
 
-    <div class="header">
+    <div class="topbar">
 
-      <div class="logo">
-        🍣 SUSHI POS ENTERPRISE
+      <div>
+        <h1>🍣 OKARA POS</h1>
+        <div class="sub">
+          Smart Sushi POS System
+        </div>
       </div>
 
       <input
         id="search"
-        class="search-box"
         placeholder="Search menu..."
       />
 
     </div>
 
     <!-- CATEGORY -->
-    <div class="categories">
+    <div class="category-tabs">
 
-      <button class="category-btn" onclick="filterCategory('ALL')">
+      <button onclick="filterMenu('ALL')">
         ALL
       </button>
 
-      <button class="category-btn" onclick="filterCategory('NIGIRI')">
-        🍣 NIGIRI
+      <button onclick="filterMenu('NIGIRI')">
+        NIGIRI
       </button>
 
-      <button class="category-btn" onclick="filterCategory('ROLL')">
-        🥢 ROLL
+      <button onclick="filterMenu('ROLL')">
+        ROLL
       </button>
 
-      <button class="category-btn" onclick="filterCategory('DONBURI')">
-        🍱 DONBURI
+      <button onclick="filterMenu('DONBURI')">
+        DONBURI
       </button>
 
-      <button class="category-btn" onclick="filterCategory('DRINK')">
-        🥤 DRINK
+      <button onclick="filterMenu('SIDE')">
+        SIDE
       </button>
 
-      <button class="category-btn" onclick="filterCategory('SIDE')">
-        🍤 SIDE
+      <button onclick="filterMenu('DRINK')">
+        DRINK
       </button>
 
     </div>
 
     <!-- MENU -->
-    <div id="menuGrid" class="menu-grid"></div>
+    <div
+      id="menuGrid"
+      class="menu-grid"
+    ></div>
 
   </div>
 
@@ -396,21 +75,13 @@ body{
   <div class="right">
 
     <div class="cart-header">
-
-      <div class="cart-title">
-        🛒 CART
-      </div>
-
-      <button
-        class="clear-btn"
-        onclick="clearCart()"
-      >
-        CLEAR
-      </button>
-
+      🛒 ORDER CART
     </div>
 
-    <div id="cart" class="cart"></div>
+    <div
+      id="cart"
+      class="cart"
+    ></div>
 
     <div class="summary">
 
@@ -433,47 +104,6 @@ body{
 
     </div>
 
-    <!-- ADMIN -->
-    <div class="admin-panel">
-
-      <h3>⚙ Product Manager</h3>
-
-      <input id="newName" placeholder="Item name">
-
-      <input id="newPrice" type="number" placeholder="Price">
-
-      <input id="newStoreQty" type="number" placeholder="Store Qty">
-
-      <select id="newCategory">
-
-        <option value="NIGIRI">NIGIRI</option>
-        <option value="ROLL">ROLL</option>
-        <option value="DONBURI">DONBURI</option>
-        <option value="DRINK">DRINK</option>
-        <option value="SIDE">SIDE</option>
-
-      </select>
-
-      <div class="admin-actions">
-
-        <button
-          class="add-btn"
-          onclick="createItem()"
-        >
-          ADD
-        </button>
-
-        <button
-          class="update-btn"
-          onclick="updateItem()"
-        >
-          UPDATE
-        </button>
-
-      </div>
-
-    </div>
-
   </div>
 
 </div>
@@ -483,91 +113,52 @@ body{
 let MENU = [];
 let FILTERED = [];
 let CART = [];
-let SELECTED_ITEM = null;
-
-/* =========================
-   LOAD MENU
-========================= */
 
 async function loadMenu(){
 
-  try{
+  const res =
+    await fetch("/api/stock");
 
-    const res =
-      await fetch("/api/stock");
+  const json =
+    await res.json();
 
-    const json =
-      await res.json();
+  MENU = json.data || [];
 
-    MENU = json.data || [];
+  FILTERED = MENU;
 
-    FILTERED = MENU;
-
-    renderMenu(FILTERED);
-
-  }catch(e){
-
-    console.error(e);
-
-    alert("MENU LOAD ERROR");
-  }
+  renderMenu(FILTERED);
 }
-
-/* =========================
-   RENDER MENU
-========================= */
 
 function renderMenu(items){
 
-  document.getElementById("menuGrid").innerHTML =
+  document.getElementById("menuGrid")
+    .innerHTML =
 
-    items.map(item=>{
+    items.map(item => `
 
-      const stock =
-        Number(item.store_qty || 0);
+      <div
+        class="menu-item"
+        onclick="addToCart(${item.id})"
+      >
 
-      return `
-
-        <div
-          class="menu-item"
-          onclick="addToCart(${item.id})"
-          ondblclick="selectForEdit(${item.id})"
-        >
-
-          ${
-            stock <= 0
-            ? `<div class="out-badge">OUT</div>`
-            : ``
-          }
-
-          <div class="menu-name">
-            ${item.name}
-          </div>
-
-          <div class="menu-category">
-            ${item.category || "MENU"}
-          </div>
-
-          <div class="menu-stock">
-            Stock: ${stock}
-          </div>
-
-          <div class="menu-price">
-            $${Number(item.price || 0).toFixed(2)}
-          </div>
-
+        <div class="menu-name">
+          ${item.name}
         </div>
 
-      `;
+        <div class="menu-category">
+          ${item.category || ""}
+        </div>
 
-    }).join("");
+        <div class="menu-price">
+          $${Number(item.price || 1.8).toFixed(2)}
+        </div>
+
+      </div>
+
+    `).join("");
 }
 
-/* =========================
-   FILTER
-========================= */
-
-function filterCategory(category){
+function filterMenu(category){
 
   if(category === "ALL"){
 
@@ -578,16 +169,12 @@ function filterCategory(category){
     FILTERED =
       MENU.filter(i =>
         (i.category || "")
-        .toUpperCase() === category
+          .toUpperCase() === category
       );
   }
 
   renderMenu(FILTERED);
 }
-
-/* =========================
-   CART
-========================= */
 
 function addToCart(id){
 
@@ -595,13 +182,6 @@ function addToCart(id){
     MENU.find(i => i.id === id);
 
   if(!item) return;
-
-  if(Number(item.store_qty || 0) <= 0){
-
-    alert("OUT OF STOCK");
-
-    return;
-  }
 
   const existing =
     CART.find(i => i.id === id);
@@ -615,7 +195,7 @@ function addToCart(id){
     CART.push({
       id:item.id,
       name:item.name,
-      price:Number(item.price || 0),
+      price:Number(item.price || 1.8),
       qty:1
     });
   }
@@ -625,41 +205,38 @@ function addToCart(id){
 
 function renderCart(){
 
-  document.getElementById("cart").innerHTML =
+  document.getElementById("cart")
+    .innerHTML =
 
-    CART.map(item=>`
+    CART.map(item => `
 
       <div class="cart-item">
 
-        <div class="cart-top">
+        <div>
 
-          <div>
-
-            <div class="cart-name">
-              ${item.name}
-            </div>
-
-            <div class="cart-price">
-              $${item.price.toFixed(2)}
-            </div>
-
+          <div class="cart-name">
+            ${item.name}
           </div>
 
-          <div>
-            $${(item.qty * item.price).toFixed(2)}
+          <div class="cart-price">
+            $${item.price.toFixed(2)}
           </div>
 
         </div>
 
         <div class="cart-controls">
 
-          <button onclick="minus(${item.id})">
-            -
+          <button
+            onclick="minus(${item.id})"
+          >
+            −
           </button>
 
           <span>${item.qty}</span>
 
-          <button onclick="plus(${item.id})">
+          <button
+            onclick="plus(${item.id})"
+          >
             +
           </button>
 
@@ -678,7 +255,6 @@ function plus(id){
     CART.find(i => i.id === id);
 
   if(item){
-
     item.qty++;
   }
 
@@ -703,17 +279,6 @@ function minus(id){
   renderCart();
 }
 
-function clearCart(){
-
-  CART = [];
-
-  renderCart();
-}
-
-/* =========================
-   SUMMARY
-========================= */
-
 function updateSummary(){
 
   const totalItems =
@@ -733,98 +298,16 @@ function updateSummary(){
       "$" + totalPrice.toFixed(2);
 }
 
-/* =========================
-   CHECKOUT
-========================= */
-
 async function checkout(){
 
   if(CART.length === 0){
 
     alert("Cart empty");
-
     return;
   }
 
-  try{
-
-    const res =
-      await fetch("/api/sales",{
-
-        method:"POST",
-
-        headers:{
-          "Content-Type":"application/json"
-        },
-
-        body:JSON.stringify({
-          items:CART
-        })
-
-      });
-
-    const json =
-      await res.json();
-
-    if(!json.success){
-
-      alert(json.error);
-
-      return;
-    }
-
-    alert(
-      "PAYMENT SUCCESS\n\n" +
-      "TOTAL: $" +
-      Number(
-        json.data?.total_amount || 0
-      ).toFixed(2)
-    );
-
-    CART = [];
-
-    renderCart();
-
-    loadMenu();
-
-  }catch(e){
-
-    console.error(e);
-
-    alert("PAYMENT ERROR");
-  }
-}
-
-/* =========================
-   CREATE ITEM
-========================= */
-
-async function createItem(){
-
-  const body = {
-
-    name:
-      document.getElementById("newName").value,
-
-    price:Number(
-      document.getElementById("newPrice").value || 0
-    ),
-
-    store_qty:Number(
-      document.getElementById("newStoreQty").value || 0
-    ),
-
-    category:
-      document.getElementById("newCategory").value,
-
-    home_qty:0,
-    supplier:"POS",
-    min_stock:15,
-    ai_enabled:true
-  };
-
   const res =
-    await fetch("/api/item",{
+    await fetch("/api/sales",{
 
       method:"POST",
 
@@ -832,8 +315,9 @@ async function createItem(){
         "Content-Type":"application/json"
       },
 
-      body:JSON.stringify(body)
-
+      body:JSON.stringify({
+        items:CART
+      })
     });
 
   const json =
@@ -842,110 +326,21 @@ async function createItem(){
   if(!json.success){
 
     alert(json.error);
-
     return;
   }
-
-  alert("ITEM ADDED");
-
-  loadMenu();
-}
-
-/* =========================
-   SELECT FOR EDIT
-========================= */
-
-function selectForEdit(id){
-
-  const item =
-    MENU.find(i => i.id === id);
-
-  if(!item) return;
-
-  SELECTED_ITEM = item.id;
-
-  document.getElementById("newName").value =
-    item.name || "";
-
-  document.getElementById("newPrice").value =
-    item.price || 0;
-
-  document.getElementById("newStoreQty").value =
-    item.store_qty || 0;
-
-  document.getElementById("newCategory").value =
-    item.category || "NIGIRI";
 
   alert(
-    "EDIT MODE\n\n" +
-    item.name
+    "PAYMENT SUCCESS\n\n" +
+    "TOTAL: $" +
+    json.total_amount.toFixed(2)
   );
-}
 
-/* =========================
-   UPDATE ITEM
-========================= */
+  CART = [];
 
-async function updateItem(){
-
-  if(!SELECTED_ITEM){
-
-    alert("DOUBLE CLICK ITEM");
-
-    return;
-  }
-
-  const body = {
-
-    id:SELECTED_ITEM,
-
-    name:
-      document.getElementById("newName").value,
-
-    price:Number(
-      document.getElementById("newPrice").value || 0
-    ),
-
-    store_qty:Number(
-      document.getElementById("newStoreQty").value || 0
-    ),
-
-    category:
-      document.getElementById("newCategory").value
-
-  };
-
-  const res =
-    await fetch("/api/item",{
-
-      method:"PUT",
-
-      headers:{
-        "Content-Type":"application/json"
-      },
-
-      body:JSON.stringify(body)
-
-    });
-
-  const json =
-    await res.json();
-
-  if(!json.success){
-
-    alert(json.error);
-
-    return;
-  }
-
-  alert("UPDATED");
+  renderCart();
 
   loadMenu();
 }
-
-/* =========================
-   SEARCH
-========================= */
 
 document
   .getElementById("search")
@@ -956,24 +351,16 @@ document
 
     renderMenu(
 
-      FILTERED.filter(i=>
-
-        (i.name || "")
+      FILTERED.filter(i =>
+        i.name
           .toLowerCase()
           .includes(keyword)
-
       )
 
     );
   });
 
-/* =========================
-   AUTO REFRESH
-========================= */
-
 loadMenu();
-
-setInterval(loadMenu, 5000);
 
 </script>
 
