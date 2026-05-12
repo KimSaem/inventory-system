@@ -6,6 +6,73 @@
 <title>Inventory ERP AI PRO</title>
 
 <link rel="stylesheet" href="/css/style.css">
+
+<style>
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+  background:#f5f5f7;
+}
+
+.page-bg{
+  position:fixed;
+  inset:0;
+  background:linear-gradient(120deg,#f5f5f7,#ffffff);
+  z-index:-1;
+}
+
+.hero{
+  display:flex;
+  justify-content:space-between;
+  padding:20px;
+  background:white;
+  border-bottom:1px solid #eee;
+}
+
+.hero-buttons button{
+  margin-left:10px;
+  padding:10px 14px;
+  border:none;
+  border-radius:10px;
+  cursor:pointer;
+}
+
+.ai-main-btn{background:#111;color:#fff;}
+.order-main-btn{background:#0071e3;color:#fff;}
+.pay-btn{background:#34c759;color:white;}
+
+.topbar{
+  display:flex;
+  gap:10px;
+  padding:10px 20px;
+}
+
+.card{
+  background:white;
+  padding:12px;
+  border-radius:12px;
+  flex:1;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+  gap:10px;
+  padding:20px;
+}
+
+.stock-card{
+  background:white;
+  padding:12px;
+  border-radius:12px;
+  box-shadow:0 4px 10px rgba(0,0,0,0.05);
+}
+
+.status.good{color:green;}
+.status.medium{color:orange;}
+.status.low{color:red;}
+</style>
+
 </head>
 
 <body>
@@ -15,25 +82,15 @@
 <header class="hero">
 
   <div>
-    <h1>🍣 Inventory ERP AI PRO</h1>
-    <p class="hero-sub">Enterprise Inventory + Sales + AI System</p>
+    <h1>🍣 ERP AI PRO</h1>
+    <p>Realtime Inventory + POS + AI System</p>
   </div>
 
   <div class="hero-buttons">
 
-    <button class="ai-main-btn" onclick="runAI()">
-      🤖 AI Predict
-    </button>
-
-    <button class="order-main-btn" onclick="generateOrders()">
-      📦 Generate Orders
-    </button>
-
-    <a href="/pos.html">
-      <button class="pay-btn">
-        🧾 POS SYSTEM
-      </button>
-    </a>
+    <button class="ai-main-btn" onclick="runAI()">AI</button>
+    <button class="order-main-btn" onclick="generateOrders()">ORDER</button>
+    <a href="/pos.html"><button class="pay-btn">POS</button></a>
 
   </div>
 
@@ -41,117 +98,53 @@
 
 <section class="topbar">
 
-  <div class="card kpi-card">
-    <div class="kpi-title">TOTAL ITEMS</div>
-    <div class="kpi-value" id="totalItems">0</div>
-  </div>
-
-  <div class="card kpi-card">
-    <div class="kpi-title">HOME STOCK</div>
-    <div class="kpi-value" id="homeStock">0</div>
-  </div>
-
-  <div class="card kpi-card">
-    <div class="kpi-title">STORE STOCK</div>
-    <div class="kpi-value" id="storeStock">0</div>
-  </div>
+  <div class="card">TOTAL<br><b id="totalItems">0</b></div>
+  <div class="card">HOME<br><b id="homeStock">0</b></div>
+  <div class="card">STORE<br><b id="storeStock">0</b></div>
 
 </section>
 
-<input
-  type="text"
-  id="search"
-  class="search"
-  placeholder="🔍 Search inventory..."
-/>
+<input id="search" style="margin:10px 20px;padding:10px;width:90%;" placeholder="search..." />
 
-<section class="card add-section">
+<section id="stockGrid" class="grid"></section>
 
-  <h2>➕ Add Item</h2>
-
-  <div class="add-box">
-
-    <input id="newName" placeholder="Item name">
-    <input id="newHome" type="number" placeholder="Home qty">
-    <input id="newStore" type="number" placeholder="Store qty">
-
-    <select id="newCategory">
-      <option value="NIGIRI">NIGIRI</option>
-      <option value="ROLL">ROLL</option>
-      <option value="DONBURI">DONBURI</option>
-      <option value="DRINK">DRINK</option>
-      <option value="SIDE">SIDE</option>
-    </select>
-
-    <select id="newSupplier">
-      <option>길모아</option>
-      <option>서비스푸드</option>
-      <option>비드푸드</option>
-      <option>메가푸드</option>
-      <option>JFC</option>
-      <option>도쿄푸드</option>
-      <option>오션푸드</option>
-    </select>
-
-    <input id="newPrice" type="number" placeholder="Price">
-
-    <button onclick="createItem()">Add</button>
-
-  </div>
-
-</section>
-
-<div id="stockGrid" class="grid"></div>
-
-<section class="logs">
-  <div class="logs-header">📜 Logs</div>
+<section style="padding:20px;">
+  <h3>📜 Logs</h3>
   <div id="logs"></div>
 </section>
 
 <script>
 
 let STOCK = [];
+let CACHE = {
+  lastUpdate:0
+};
 
-/* INIT */
+const REFRESH_MS = 3000;
+
+/* =========================
+   INIT
+========================= */
 document.addEventListener("DOMContentLoaded",()=>{
-  loadDashboard();
+  loadAll();
 
-  document.getElementById("search")
-  ?.addEventListener("input",(e)=>{
-
+  document.getElementById("search").addEventListener("input",e=>{
     const k = e.target.value.toLowerCase();
-
-    renderStock(
-      STOCK.filter(i =>
-        (i.name||"").toLowerCase().includes(k)
-      )
-    );
+    render(STOCK.filter(i=>i.name.toLowerCase().includes(k)));
   });
 });
 
-/* AI */
-function calculateAIOrder(item){
-
-  const total =
-    Number(item.home_qty||0) +
-    Number(item.store_qty||0);
-
-  const min = Number(item.min_stock||15);
-
-  let r = Math.ceil((min-total)*1.3);
-
-  if(r<0) r=0;
-  if(r>0 && r<3) r=3;
-
-  return r;
-}
-
-/* LOAD */
-async function loadDashboard(){
+/* =========================
+   LOAD ALL
+========================= */
+async function loadAll(){
   await loadStock();
   await loadLogs();
 }
 
+/* =========================
+   STOCK (REALTIME SAFE)
+========================= */
 async function loadStock(){
 
   const res = await fetch("/api/stock");
@@ -162,14 +155,105 @@ async function loadStock(){
   STOCK = json.data || [];
 
   STOCK.forEach(i=>{
-    i.ai_order = calculateAIOrder(i);
+    i.ai = calcAI(i);
   });
 
-  renderStock(STOCK);
+  render(STOCK);
   updateKPI(STOCK);
 }
 
-/* KPI */
+/* =========================
+   AI LOGIC
+========================= */
+function calcAI(i){
+
+  const total =
+    Number(i.home_qty||0)+Number(i.store_qty||0);
+
+  const min = Number(i.min_stock||15);
+
+  let r = Math.ceil((min-total)*1.2);
+
+  if(r < 0) r = 0;
+  if(r > 0 && r < 3) r = 3;
+
+  return r;
+}
+
+/* =========================
+   UI
+========================= */
+function render(list){
+
+  document.getElementById("stockGrid").innerHTML =
+    list.map(i=>{
+
+      const total =
+        Number(i.home_qty||0)+Number(i.store_qty||0);
+
+      let status="GOOD";
+      let cls="good";
+
+      if(total<=5){status="LOW";cls="low";}
+      else if(total<=15){status="MEDIUM";cls="medium";}
+
+      return `
+      <div class="stock-card">
+
+        <h4>${i.name}</h4>
+
+        <div>🏢 ${i.supplier}</div>
+        <div>💰 $${i.price}</div>
+
+        <div>HOME: ${i.home_qty}</div>
+        <div>STORE: ${i.store_qty}</div>
+
+        <div>AI: ${i.ai}</div>
+
+        <div class="status ${cls}">${status}</div>
+
+        <input id="q-${i.id}" type="number" value="1"/>
+
+        <button onclick="sell(${i.id})">SELL</button>
+
+      </div>
+      `;
+    }).join("");
+}
+
+/* =========================
+   SELL (POS HOOK CORE)
+========================= */
+async function sell(id){
+
+  const qty = Number(document.getElementById("q-"+id).value||1);
+
+  await fetch("/api/order",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({stock_id:id,qty})
+  });
+
+  await loadAll();
+}
+
+/* =========================
+   LOGS
+========================= */
+async function loadLogs(){
+
+  const res = await fetch("/api/log");
+  const json = await res.json();
+
+  document.getElementById("logs").innerHTML =
+    (json.data||[]).map(l=>`
+      <div>${l.action} | ${l.qty} | ${l.note}</div>
+    `).join("");
+}
+
+/* =========================
+   KPI
+========================= */
 function updateKPI(items){
 
   document.getElementById("totalItems").innerText = items.length;
@@ -181,158 +265,25 @@ function updateKPI(items){
     items.reduce((a,b)=>a+Number(b.store_qty||0),0);
 }
 
-/* RENDER */
-function renderStock(items){
-
-  const grid = document.getElementById("stockGrid");
-
-  grid.innerHTML = items.map(i=>{
-
-    const total =
-      Number(i.home_qty||0)+Number(i.store_qty||0);
-
-    let cls="good";
-    let status="GOOD";
-
-    if(total<=5){cls="low";status="LOW";}
-    else if(total<=15){cls="medium";status="MEDIUM";}
-
-    return `
-      <div class="stock-card">
-
-        <div class="stock-title">${i.name}</div>
-
-        <div>🏢 ${i.supplier}</div>
-        <div>💰 $${Number(i.price||0)}</div>
-
-        <div>HOME: ${i.home_qty}</div>
-        <div>STORE: ${i.store_qty}</div>
-
-        <div>AI: ${i.ai_order}</div>
-
-        <div class="status ${cls}">${status}</div>
-
-        <div class="actions">
-
-          <input id="home-${i.id}" type="number" value="${i.home_qty}">
-          <input id="store-${i.id}" type="number" value="${i.store_qty}">
-
-        </div>
-
-        <div class="actions">
-
-          <button onclick="adjust(${i.id})">Adjust</button>
-          <button onclick="sell(${i.id})">Sell</button>
-
-        </div>
-
-        <div class="actions">
-
-          <button onclick="move(${i.id},'home','store')">H→S</button>
-          <button onclick="move(${i.id},'store','home')">S→H</button>
-
-        </div>
-
-      </div>
-    `;
-  }).join("");
-}
-
-/* CREATE */
-async function createItem(){
-
-  const body = {
-    name: newName.value,
-    home_qty: Number(newHome.value||0),
-    store_qty: Number(newStore.value||0),
-    supplier: newSupplier.value,
-    category: newCategory.value,
-    price: Number(newPrice.value||5),
-    min_stock:15,
-    ai_enabled:true
-  };
-
-  await fetch("/api/item",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify(body)
-  });
-
-  loadDashboard();
-}
-
-/* SELL (POS HOOK) */
-async function sell(id){
-
-  const qty = 1;
-
-  await fetch("/api/order",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({stock_id:id,qty})
-  });
-
-  loadDashboard();
-}
-
-/* ADJUST */
-async function adjust(id){
-
-  const home = Number(document.getElementById(`home-${id}`).value||0);
-  const store = Number(document.getElementById(`store-${id}`).value||0);
-
-  await fetch("/api/adjust",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({stock_id:id,home_qty:home,store_qty:store})
-  });
-
-  loadDashboard();
-}
-
-/* MOVE */
-async function move(id,from,to){
-
-  await fetch("/api/transfer",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({
-      stock_id:id,
-      qty:1,
-      from,
-      to
-    })
-  });
-
-  loadDashboard();
-}
-
-/* LOG */
-async function loadLogs(){
-
-  const res = await fetch("/api/log");
-  const json = await res.json();
-
-  document.getElementById("logs").innerHTML =
-    (json.data||[]).map(l=>`
-      <div>${l.action} | ${l.qty}</div>
-    `).join("");
-}
-
-/* AI */
+/* =========================
+   AI + ORDER
+========================= */
 async function runAI(){
   await fetch("/api/ai-predict");
-  loadDashboard();
+  loadAll();
 }
 
-/* ORDER */
 async function generateOrders(){
-
   const res = await fetch("/api/generate-order");
   const json = await res.json();
-
   alert(JSON.stringify(json.orders,null,2));
 }
+
+/* =========================
+   REALTIME LOOP
+========================= */
+setInterval(loadStock, REFRESH_MS);
+setInterval(loadLogs, 5000);
 
 </script>
 
