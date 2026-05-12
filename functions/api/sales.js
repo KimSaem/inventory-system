@@ -1,78 +1,74 @@
 import { createDB } from "../db/client.js";
 
-export async function onRequest(context) {
+export async function onRequest(context){
 
-  const { env, request } = context;
+  const db = createDB(context.env);
 
-  try {
+  try{
 
-    if (!env.DB) {
-      return Response.json({
-        success: false,
-        error: "DB_NOT_BOUND"
-      }, { status: 500 });
-    }
-
-    const db = createDB(env);
-
-    const body = await request.json();
-
+    const body = await context.request.json();
     const items = body.items || [];
 
-    if (!Array.isArray(items) || items.length === 0) {
+    if(!Array.isArray(items) || items.length === 0){
       return Response.json({
-        success: false,
-        error: "EMPTY_CART"
-      }, { status: 400 });
+        success:false,
+        error:"EMPTY_CART"
+      }, {status:400});
+    }
+
+    // =========================
+    // 1. PRE-CALC
+    // =========================
+    const ids = items.map(i => Number(i.id));
+
+    const stockRes = await db
+      .prepare(`
+        SELECT * FROM stock
+        WHERE id IN (${ids.map(()=>"?").join(",")})
+      `)
+      .bind(...ids)
+      .all();
+
+    const stockMap = new Map();
+    for(const s of stockRes.results){
+      stockMap.set(s.id, s);
     }
 
     let totalAmount = 0;
-    let salesResults = [];
+    const receiptItems = [];
 
     // =========================
-    // 1. LOOP ITEMS (POS CART)
+    // 2. PROCESS CART
     // =========================
-    for (const cartItem of items) {
+    for(const cart of items){
 
-      const stock_id = Number(cartItem.id);
-      const qty = Number(cartItem.qty || 1);
+      const id = Number(cart.id);
+      const qty = Number(cart.qty || 1);
 
-      if (!stock_id || qty <= 0) continue;
+      const stock = stockMap.get(id);
 
-      // =========================
-      // 2. GET ITEM
-      // =========================
-      const itemRes = await db
-        .prepare(`
-          SELECT *
-          FROM stock
-          WHERE id = ?
-        `)
-        .bind(stock_id)
-        .all();
+      if(!stock) continue;
 
-      const item = itemRes?.results?.[0];
-
-      if (!item) continue;
-
-      // =========================
-      // 3. CHECK STOCK
-      // =========================
-      if (Number(item.store_qty) < qty) {
+      // STOCK CHECK
+      if(Number(stock.store_qty) < qty){
         return Response.json({
-          success: false,
-          error: `NOT_ENOUGH_STOCK: ${item.name}`
-        }, { status: 400 });
+          success:false,
+          error:`NOT_ENOUGH_STOCK: ${stock.name}`
+        },{status:400});
       }
 
-      const newStoreQty = Number(item.store_qty) - qty;
+      const newQty =
+        Number(stock.store_qty) - qty;
 
-      const totalPrice = qty * Number(item.price || 0);
+      const price =
+        Number(stock.price || 0);
 
-      totalAmount += totalPrice;
+      const total = price * qty;
+
+      totalAmount += total;
 
       // =========================
-      // 4. UPDATE STOCK
+      // STOCK UPDATE
       // =========================
       await db
         .prepare(`
@@ -80,11 +76,11 @@ export async function onRequest(context) {
           SET store_qty = ?
           WHERE id = ?
         `)
-        .bind(newStoreQty, stock_id)
+        .bind(newQty, id)
         .run();
 
       // =========================
-      // 5. SALES TABLE
+      // SALES TABLE
       // =========================
       await db
         .prepare(`
@@ -92,21 +88,23 @@ export async function onRequest(context) {
             stock_id,
             item_name,
             qty,
+            price,
             total_price,
             created_at
           )
-          VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+          VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
         `)
         .bind(
-          stock_id,
-          item.name,
+          id,
+          stock.name,
           qty,
-          totalPrice
+          price,
+          total
         )
         .run();
 
       // =========================
-      // 6. LOG TABLE
+      // LOG TABLE
       // =========================
       await db
         .prepare(`
@@ -116,54 +114,48 @@ export async function onRequest(context) {
             qty,
             note
           )
-          VALUES (?, ?, ?, ?)
+          VALUES (?, 'SALE', ?, 'POS AUTO SALE')
         `)
-        .bind(
-          stock_id,
-          "SALE",
-          qty,
-          "POS checkout"
-        )
+        .bind(id, qty)
         .run();
 
       // =========================
-      // 7. AI LEARNING FEED
+      // AI FEED
       // =========================
       await db
         .prepare(`
           UPDATE stock
-          SET daily_usage =
-            COALESCE(daily_usage, 0) + ?
+          SET daily_usage = COALESCE(daily_usage,0) + ?
           WHERE id = ?
         `)
-        .bind(qty, stock_id)
+        .bind(qty, id)
         .run();
 
-      salesResults.push({
-        item: item.name,
+      receiptItems.push({
+        id,
+        name: stock.name,
         qty,
-        price: totalPrice
+        price,
+        total
       });
     }
 
     // =========================
-    // 8. AUTO AI TRIGGER HOOK
+    // 3. RESPONSE (POS READY)
     // =========================
-    // (추후 auto-order.js 연결 가능)
-
     return Response.json({
-      success: true,
-      data: {
+      success:true,
+      data:{
         total_amount: totalAmount,
-        items: salesResults
+        items: receiptItems
       }
     });
 
-  } catch (e) {
+  }catch(e){
 
     return Response.json({
-      success: false,
-      error: e.message || "SERVER_ERROR"
-    }, { status: 500 });
+      success:false,
+      error:e.message
+    },{status:500});
   }
 }
