@@ -1,14 +1,11 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-
-<title>Inventory ERP AI</title>
+<title>Inventory ERP AI PRO</title>
 
 <link rel="stylesheet" href="/css/style.css">
-
 </head>
 
 <body>
@@ -18,8 +15,8 @@
 <header class="hero">
 
   <div>
-    <h1>🍣 Inventory ERP AI</h1>
-    <p class="hero-sub">Smart Inventory + AI Control System</p>
+    <h1>🍣 Inventory ERP AI PRO</h1>
+    <p class="hero-sub">Enterprise Inventory + Sales + AI System</p>
   </div>
 
   <div class="hero-buttons">
@@ -31,6 +28,12 @@
     <button class="order-main-btn" onclick="generateOrders()">
       📦 Generate Orders
     </button>
+
+    <a href="/pos.html">
+      <button class="pay-btn">
+        🧾 POS SYSTEM
+      </button>
+    </a>
 
   </div>
 
@@ -64,14 +67,12 @@
 
 <section class="card add-section">
 
-  <h2 class="section-title">➕ Add Item</h2>
+  <h2>➕ Add Item</h2>
 
   <div class="add-box">
 
     <input id="newName" placeholder="Item name">
-
     <input id="newHome" type="number" placeholder="Home qty">
-
     <input id="newStore" type="number" placeholder="Store qty">
 
     <select id="newCategory">
@@ -83,18 +84,18 @@
     </select>
 
     <select id="newSupplier">
-      <option value="길모아">길모아</option>
-      <option value="서비스푸드">서비스푸드</option>
-      <option value="비드푸드">비드푸드</option>
-      <option value="메가푸드">메가푸드</option>
-      <option value="JFC">JFC</option>
-      <option value="도쿄푸드">도쿄푸드</option>
-      <option value="오션푸드">오션푸드</option>
+      <option>길모아</option>
+      <option>서비스푸드</option>
+      <option>비드푸드</option>
+      <option>메가푸드</option>
+      <option>JFC</option>
+      <option>도쿄푸드</option>
+      <option>오션푸드</option>
     </select>
 
     <input id="newPrice" type="number" placeholder="Price">
 
-    <button class="add-btn" onclick="createItem()">Add</button>
+    <button onclick="createItem()">Add</button>
 
   </div>
 
@@ -103,7 +104,7 @@
 <div id="stockGrid" class="grid"></div>
 
 <section class="logs">
-  <div class="logs-header">📜 Recent Logs</div>
+  <div class="logs-header">📜 Logs</div>
   <div id="logs"></div>
 </section>
 
@@ -111,40 +112,36 @@
 
 let STOCK = [];
 
-/* SAFE INIT */
-document.addEventListener("DOMContentLoaded", () => {
-
-  const search = document.getElementById("search");
-
-  if(search){
-    search.addEventListener("input", (e) => {
-
-      const keyword = e.target.value.toLowerCase();
-
-      const filtered = STOCK.filter(i =>
-        (i.name || "").toLowerCase().includes(keyword)
-      );
-
-      renderStock(filtered);
-    });
-  }
-
+/* INIT */
+document.addEventListener("DOMContentLoaded",()=>{
   loadDashboard();
+
+  document.getElementById("search")
+  ?.addEventListener("input",(e)=>{
+
+    const k = e.target.value.toLowerCase();
+
+    renderStock(
+      STOCK.filter(i =>
+        (i.name||"").toLowerCase().includes(k)
+      )
+    );
+  });
 });
 
-/* AI ORDER */
+/* AI */
 function calculateAIOrder(item){
 
   const total =
-    Number(item.home_qty || 0) +
-    Number(item.store_qty || 0);
+    Number(item.home_qty||0) +
+    Number(item.store_qty||0);
 
-  const min = Number(item.min_stock || 15);
+  const min = Number(item.min_stock||15);
 
-  let r = Math.ceil((min - total) * 1.3);
+  let r = Math.ceil((min-total)*1.3);
 
-  if(r < 0) r = 0;
-  if(r > 0 && r < 3) r = 3;
+  if(r<0) r=0;
+  if(r>0 && r<3) r=3;
 
   return r;
 }
@@ -157,25 +154,19 @@ async function loadDashboard(){
 
 async function loadStock(){
 
-  try{
+  const res = await fetch("/api/stock");
+  const json = await res.json();
 
-    const res = await fetch("/api/stock");
-    const json = await res.json();
+  if(!json.success) return;
 
-    if(!json.success) return alert(json.error);
+  STOCK = json.data || [];
 
-    STOCK = json.data || [];
+  STOCK.forEach(i=>{
+    i.ai_order = calculateAIOrder(i);
+  });
 
-    STOCK.forEach(i => {
-      i.ai_order = calculateAIOrder(i);
-    });
-
-    renderStock(STOCK);
-    updateKPI(STOCK);
-
-  }catch(e){
-    console.error(e);
-  }
+  renderStock(STOCK);
+  updateKPI(STOCK);
 }
 
 /* KPI */
@@ -184,73 +175,61 @@ function updateKPI(items){
   document.getElementById("totalItems").innerText = items.length;
 
   document.getElementById("homeStock").innerText =
-    items.reduce((a,b)=>a + Number(b.home_qty||0),0);
+    items.reduce((a,b)=>a+Number(b.home_qty||0),0);
 
   document.getElementById("storeStock").innerText =
-    items.reduce((a,b)=>a + Number(b.store_qty||0),0);
-
+    items.reduce((a,b)=>a+Number(b.store_qty||0),0);
 }
 
 /* RENDER */
 function renderStock(items){
 
   const grid = document.getElementById("stockGrid");
-  if(!grid) return;
 
-  grid.innerHTML = items.map(item => {
+  grid.innerHTML = items.map(i=>{
 
     const total =
-      Number(item.home_qty||0) +
-      Number(item.store_qty||0);
+      Number(i.home_qty||0)+Number(i.store_qty||0);
 
-    let status = "GOOD";
-    let cls = "good";
+    let cls="good";
+    let status="GOOD";
 
-    if(total <= 5){ status="LOW"; cls="low"; }
-    else if(total <= 15){ status="MEDIUM"; cls="medium"; }
+    if(total<=5){cls="low";status="LOW";}
+    else if(total<=15){cls="medium";status="MEDIUM";}
 
     return `
       <div class="stock-card">
 
-        <div class="stock-title">${item.name || "-"}</div>
+        <div class="stock-title">${i.name}</div>
 
-        <div class="row">
-          <span>🏢 ${item.supplier || "-"}</span>
-          <span>$${Number(item.price||0).toFixed(2)}</span>
-        </div>
+        <div>🏢 ${i.supplier}</div>
+        <div>💰 $${Number(i.price||0)}</div>
 
-        <div class="row">
-          <span>HOME</span>
-          <span>${item.home_qty}</span>
-        </div>
+        <div>HOME: ${i.home_qty}</div>
+        <div>STORE: ${i.store_qty}</div>
 
-        <div class="row">
-          <span>STORE</span>
-          <span>${item.store_qty}</span>
-        </div>
+        <div>AI: ${i.ai_order}</div>
 
-        <div class="row">
-          <span>AI</span>
-          <span>${item.ai_order}</span>
-        </div>
-
-        <div class="status-badge ${cls}">
-          ${status}
-        </div>
-
-        <input type="number" id="qty-${item.id}" value="1">
+        <div class="status ${cls}">${status}</div>
 
         <div class="actions">
 
-          <button onclick="adjustStock(${item.id})">Adjust</button>
-          <button onclick="sellItem(${item.id})">Sell</button>
+          <input id="home-${i.id}" type="number" value="${i.home_qty}">
+          <input id="store-${i.id}" type="number" value="${i.store_qty}">
 
         </div>
 
         <div class="actions">
 
-          <button onclick="move(${item.id},'home','store')">H→S</button>
-          <button onclick="move(${item.id},'store','home')">S→H</button>
+          <button onclick="adjust(${i.id})">Adjust</button>
+          <button onclick="sell(${i.id})">Sell</button>
+
+        </div>
+
+        <div class="actions">
+
+          <button onclick="move(${i.id},'home','store')">H→S</button>
+          <button onclick="move(${i.id},'store','home')">S→H</button>
 
         </div>
 
@@ -262,37 +241,30 @@ function renderStock(items){
 /* CREATE */
 async function createItem(){
 
-  const name = document.getElementById("newName").value;
-  if(!name) return alert("Name required");
-
   const body = {
-    name,
-    home_qty:Number(document.getElementById("newHome").value||0),
-    store_qty:Number(document.getElementById("newStore").value||0),
-    supplier:document.getElementById("newSupplier").value,
-    category:document.getElementById("newCategory").value,
-    price:Number(document.getElementById("newPrice").value||5),
+    name: newName.value,
+    home_qty: Number(newHome.value||0),
+    store_qty: Number(newStore.value||0),
+    supplier: newSupplier.value,
+    category: newCategory.value,
+    price: Number(newPrice.value||5),
     min_stock:15,
     ai_enabled:true
   };
 
-  const res = await fetch("/api/item",{
+  await fetch("/api/item",{
     method:"POST",
     headers:{"Content-Type":"application/json"},
     body:JSON.stringify(body)
   });
 
-  const json = await res.json();
-
-  if(!json.success) return alert(json.error);
-
   loadDashboard();
 }
 
-/* SELL */
-async function sellItem(id){
+/* SELL (POS HOOK) */
+async function sell(id){
 
-  const qty = Number(document.getElementById(`qty-${id}`)?.value||1);
+  const qty = 1;
 
   await fetch("/api/order",{
     method:"POST",
@@ -303,11 +275,11 @@ async function sellItem(id){
   loadDashboard();
 }
 
-/* OTHER OPS */
-async function adjustStock(id){
+/* ADJUST */
+async function adjust(id){
 
-  const home = Number(document.getElementById(`home-adjust-${id}`)?.value||0);
-  const store = Number(document.getElementById(`store-adjust-${id}`)?.value||0);
+  const home = Number(document.getElementById(`home-${id}`).value||0);
+  const store = Number(document.getElementById(`store-${id}`).value||0);
 
   await fetch("/api/adjust",{
     method:"POST",
@@ -318,32 +290,32 @@ async function adjustStock(id){
   loadDashboard();
 }
 
+/* MOVE */
 async function move(id,from,to){
-
-  const qty = Number(document.getElementById(`qty-${id}`)?.value||1);
 
   await fetch("/api/transfer",{
     method:"POST",
     headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({stock_id:id,qty,from,to})
+    body:JSON.stringify({
+      stock_id:id,
+      qty:1,
+      from,
+      to
+    })
   });
 
   loadDashboard();
 }
 
-/* LOGS */
+/* LOG */
 async function loadLogs(){
 
   const res = await fetch("/api/log");
   const json = await res.json();
 
-  const data = json.data || [];
-
   document.getElementById("logs").innerHTML =
-    data.map(l=>`
-      <div class="log-item">
-        ${l.action} | ${l.qty} | ${l.note}
-      </div>
+    (json.data||[]).map(l=>`
+      <div>${l.action} | ${l.qty}</div>
     `).join("");
 }
 
@@ -355,8 +327,10 @@ async function runAI(){
 
 /* ORDER */
 async function generateOrders(){
+
   const res = await fetch("/api/generate-order");
   const json = await res.json();
+
   alert(JSON.stringify(json.orders,null,2));
 }
 
