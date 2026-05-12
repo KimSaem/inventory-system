@@ -10,7 +10,7 @@
 <style>
 body{
   margin:0;
-  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family:-apple-system,BlinkMacSystemFont,sans-serif;
   background:#f5f5f7;
 }
 
@@ -46,9 +46,7 @@ body{
   cursor:pointer;
 }
 
-.menu-name{
-  font-weight:700;
-}
+.menu-name{ font-weight:700; }
 
 .menu-price{
   color:#0071e3;
@@ -84,7 +82,7 @@ body{
   <!-- LEFT -->
   <div class="left">
 
-    <h2>🍣 SUSHI POS</h2>
+    <h2>🍣 SUSHI POS PRO</h2>
 
     <input id="search" placeholder="Search menu..." />
 
@@ -103,7 +101,7 @@ body{
       Items: <span id="itemCount">0</span>
     </div>
 
-    <div style="font-weight:700; margin-top:10px;">
+    <div style="font-weight:700;margin-top:10px;">
       Total: <span id="totalPrice">$0</span>
     </div>
 
@@ -134,7 +132,7 @@ async function loadMenu(){
 }
 
 /* =========================
-   RENDER MENU
+   MENU RENDER
 ========================= */
 function renderMenu(items){
 
@@ -146,26 +144,9 @@ function renderMenu(items){
       </div>
     `).join("");
 }
-async function printReceipt(data){
-
-  const receipt = {
-    store: "OKARA SUSHI",
-    items: data.items,
-    total: data.total_amount,
-    time: new Date().toISOString()
-  };
-
-  await fetch("/api/print", {
-    method: "POST",
-    headers: {
-      "Content-Type":"application/json"
-    },
-    body: JSON.stringify(receipt)
-  });
-}
 
 /* =========================
-   ADD TO CART
+   CART ADD (MERGE VERSION)
 ========================= */
 function addToCart(id){
 
@@ -175,7 +156,7 @@ function addToCart(id){
   const existing = CART.find(i => i.id === id);
 
   if(existing){
-    existing.qty++;
+    existing.qty += 1;
   }else{
     CART.push({
       id:item.id,
@@ -220,8 +201,9 @@ function minus(id){
   if(!item) return;
 
   item.qty--;
+
   if(item.qty <= 0){
-    CART = CART.filter(i=>i.id !== id);
+    CART = CART.filter(i=>i.id!==id);
   }
 
   renderCart();
@@ -234,8 +216,8 @@ function updateSummary(){
 
   const totalItems = CART.reduce((a,b)=>a+b.qty,0);
 
-  const totalPrice = CART.reduce((a,b)=>
-    a + b.qty * b.price
+  const totalPrice = CART.reduce(
+    (a,b)=>a + b.qty * b.price
   ,0);
 
   document.getElementById("itemCount").innerText = totalItems;
@@ -243,8 +225,7 @@ function updateSummary(){
 }
 
 /* =========================
-   ENTERPRISE CHECKOUT
-   👉 핵심: /api/sales ONLY
+   CHECKOUT (ENTERPRISE FLOW)
 ========================= */
 async function checkout(){
 
@@ -271,6 +252,19 @@ async function checkout(){
       alert(json.error);
       return;
     }
+
+    // 🧾 receipt hook (optional)
+    await fetch("/api/print",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json"
+      },
+      body:JSON.stringify({
+        items:CART,
+        total: json.total || 0,
+        time: new Date().toISOString()
+      })
+    });
 
     alert("PAYMENT SUCCESS");
 
