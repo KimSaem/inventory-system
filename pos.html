@@ -1,17 +1,43 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>SUSHI POS PRO</title>
+
+<title>SUSHI POS ENTERPRISE</title>
 
 <link rel="stylesheet" href="/css/pos.css">
 
 <style>
-body{
+
+:root{
+  --bg:#0b1020;
+  --panel:#131a2e;
+  --card:#1a2338;
+  --cardHover:#24304d;
+
+  --text:#f3f4f6;
+  --muted:#94a3b8;
+
+  --blue:#3b82f6;
+  --green:#22c55e;
+  --red:#ef4444;
+  --orange:#f59e0b;
+}
+
+*{
   margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
+
+body{
   font-family:-apple-system,BlinkMacSystemFont,sans-serif;
-  background:#f5f5f7;
+  background:
+    radial-gradient(circle at top left,#1d2945,#0b1020);
+  color:var(--text);
+  overflow:hidden;
 }
 
 .container{
@@ -19,58 +45,294 @@ body{
   height:100vh;
 }
 
+/* =========================
+   LEFT
+========================= */
+
 .left{
   flex:2;
-  padding:20px;
+  padding:22px;
   overflow:auto;
 }
 
-.right{
-  flex:1;
-  background:white;
-  padding:20px;
-  border-left:1px solid #eee;
+.header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:20px;
 }
+
+.logo{
+  font-size:34px;
+  font-weight:900;
+}
+
+.search-box{
+  width:320px;
+  padding:14px;
+  border:none;
+  border-radius:16px;
+  background:#111827;
+  color:white;
+  font-size:15px;
+}
+
+/* =========================
+   CATEGORY
+========================= */
+
+.categories{
+  display:flex;
+  gap:10px;
+  margin-bottom:20px;
+  flex-wrap:wrap;
+}
+
+.category-btn{
+  border:none;
+  background:#1f2937;
+  color:white;
+  padding:10px 16px;
+  border-radius:14px;
+  font-weight:700;
+  cursor:pointer;
+  transition:0.2s;
+}
+
+.category-btn:hover{
+  background:var(--blue);
+}
+
+/* =========================
+   MENU GRID
+========================= */
 
 .menu-grid{
   display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
-  gap:12px;
+  grid-template-columns:
+    repeat(auto-fill,minmax(220px,1fr));
+  gap:16px;
 }
 
 .menu-item{
-  background:white;
-  border-radius:16px;
-  padding:14px;
-  box-shadow:0 5px 15px rgba(0,0,0,0.05);
+  background:rgba(255,255,255,0.05);
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:22px;
+  padding:18px;
+  transition:0.2s;
+  cursor:pointer;
+  position:relative;
+  backdrop-filter:blur(10px);
+}
+
+.menu-item:hover{
+  transform:translateY(-4px);
+  background:rgba(255,255,255,0.08);
+}
+
+.menu-name{
+  font-size:20px;
+  font-weight:800;
+}
+
+.menu-category{
+  margin-top:8px;
+  font-size:12px;
+  color:var(--muted);
+}
+
+.menu-price{
+  margin-top:14px;
+  font-size:26px;
+  font-weight:900;
+  color:#22c55e;
+}
+
+.menu-stock{
+  margin-top:10px;
+  color:var(--muted);
+  font-size:13px;
+}
+
+.out-badge{
+  position:absolute;
+  top:14px;
+  right:14px;
+  background:var(--red);
+  color:white;
+  padding:4px 10px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:700;
+}
+
+/* =========================
+   RIGHT
+========================= */
+
+.right{
+  width:420px;
+  background:rgba(15,23,42,0.9);
+  border-left:1px solid rgba(255,255,255,0.08);
+  padding:22px;
+  display:flex;
+  flex-direction:column;
+}
+
+.cart-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:18px;
+}
+
+.cart-title{
+  font-size:28px;
+  font-weight:900;
+}
+
+.clear-btn{
+  background:var(--red);
+  color:white;
+  border:none;
+  border-radius:10px;
+  padding:8px 12px;
   cursor:pointer;
 }
 
-.menu-name{ font-weight:700; }
-
-.menu-price{
-  color:#0071e3;
-  margin-top:6px;
+.cart{
+  flex:1;
+  overflow:auto;
 }
 
 .cart-item{
+  background:#1e293b;
+  border-radius:18px;
+  padding:14px;
+  margin-bottom:12px;
+}
+
+.cart-top{
   display:flex;
   justify-content:space-between;
-  padding:10px 0;
-  border-bottom:1px solid #eee;
+}
+
+.cart-name{
+  font-weight:800;
+}
+
+.cart-price{
+  margin-top:6px;
+  color:var(--muted);
+  font-size:14px;
+}
+
+.cart-controls{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-top:12px;
+}
+
+.cart-controls button{
+  width:34px;
+  height:34px;
+  border:none;
+  border-radius:12px;
+  background:#334155;
+  color:white;
+  font-size:18px;
+  cursor:pointer;
+}
+
+.summary{
+  border-top:1px solid rgba(255,255,255,0.08);
+  padding-top:16px;
+}
+
+.summary-row{
+  display:flex;
+  justify-content:space-between;
+  margin-bottom:12px;
+}
+
+.total{
+  font-size:30px;
+  font-weight:900;
 }
 
 .pay-btn{
   width:100%;
-  padding:14px;
-  background:#111;
-  color:white;
   border:none;
-  border-radius:12px;
-  font-size:16px;
+  border-radius:18px;
+  padding:18px;
   margin-top:20px;
+  font-size:20px;
+  font-weight:900;
+  background:
+    linear-gradient(
+      135deg,
+      #22c55e,
+      #16a34a
+    );
+  color:white;
   cursor:pointer;
 }
+
+.pay-btn:hover{
+  opacity:0.9;
+}
+
+/* =========================
+   ADMIN PANEL
+========================= */
+
+.admin-panel{
+  margin-top:18px;
+  padding:16px;
+  background:#111827;
+  border-radius:18px;
+}
+
+.admin-panel h3{
+  margin-bottom:12px;
+}
+
+.admin-panel input,
+.admin-panel select{
+  width:100%;
+  margin-bottom:10px;
+  padding:12px;
+  border:none;
+  border-radius:12px;
+  background:#1f2937;
+  color:white;
+}
+
+.admin-actions{
+  display:flex;
+  gap:10px;
+}
+
+.admin-actions button{
+  flex:1;
+  border:none;
+  border-radius:12px;
+  padding:12px;
+  font-weight:700;
+  cursor:pointer;
+}
+
+.add-btn{
+  background:var(--green);
+  color:white;
+}
+
+.update-btn{
+  background:var(--blue);
+  color:white;
+}
+
 </style>
 
 </head>
@@ -82,10 +344,50 @@ body{
   <!-- LEFT -->
   <div class="left">
 
-    <h2>🍣 SUSHI POS PRO</h2>
+    <div class="header">
 
-    <input id="search" placeholder="Search menu..." />
+      <div class="logo">
+        🍣 SUSHI POS ENTERPRISE
+      </div>
 
+      <input
+        id="search"
+        class="search-box"
+        placeholder="Search menu..."
+      />
+
+    </div>
+
+    <!-- CATEGORY -->
+    <div class="categories">
+
+      <button class="category-btn" onclick="filterCategory('ALL')">
+        ALL
+      </button>
+
+      <button class="category-btn" onclick="filterCategory('NIGIRI')">
+        🍣 NIGIRI
+      </button>
+
+      <button class="category-btn" onclick="filterCategory('ROLL')">
+        🥢 ROLL
+      </button>
+
+      <button class="category-btn" onclick="filterCategory('DONBURI')">
+        🍱 DONBURI
+      </button>
+
+      <button class="category-btn" onclick="filterCategory('DRINK')">
+        🥤 DRINK
+      </button>
+
+      <button class="category-btn" onclick="filterCategory('SIDE')">
+        🍤 SIDE
+      </button>
+
+    </div>
+
+    <!-- MENU -->
     <div id="menuGrid" class="menu-grid"></div>
 
   </div>
@@ -93,21 +395,84 @@ body{
   <!-- RIGHT -->
   <div class="right">
 
-    <h3>🛒 CART</h3>
+    <div class="cart-header">
 
-    <div id="cart"></div>
+      <div class="cart-title">
+        🛒 CART
+      </div>
 
-    <div style="margin-top:10px;">
-      Items: <span id="itemCount">0</span>
+      <button
+        class="clear-btn"
+        onclick="clearCart()"
+      >
+        CLEAR
+      </button>
+
     </div>
 
-    <div style="font-weight:700;margin-top:10px;">
-      Total: <span id="totalPrice">$0</span>
+    <div id="cart" class="cart"></div>
+
+    <div class="summary">
+
+      <div class="summary-row">
+        <span>Items</span>
+        <span id="itemCount">0</span>
+      </div>
+
+      <div class="summary-row total">
+        <span>Total</span>
+        <span id="totalPrice">$0.00</span>
+      </div>
+
+      <button
+        class="pay-btn"
+        onclick="checkout()"
+      >
+        PAY NOW
+      </button>
+
     </div>
 
-    <button class="pay-btn" onclick="checkout()">
-      PAY NOW
-    </button>
+    <!-- ADMIN -->
+    <div class="admin-panel">
+
+      <h3>⚙ Product Manager</h3>
+
+      <input id="newName" placeholder="Item name">
+
+      <input id="newPrice" type="number" placeholder="Price">
+
+      <input id="newStoreQty" type="number" placeholder="Store Qty">
+
+      <select id="newCategory">
+
+        <option value="NIGIRI">NIGIRI</option>
+        <option value="ROLL">ROLL</option>
+        <option value="DONBURI">DONBURI</option>
+        <option value="DRINK">DRINK</option>
+        <option value="SIDE">SIDE</option>
+
+      </select>
+
+      <div class="admin-actions">
+
+        <button
+          class="add-btn"
+          onclick="createItem()"
+        >
+          ADD
+        </button>
+
+        <button
+          class="update-btn"
+          onclick="updateItem()"
+        >
+          UPDATE
+        </button>
+
+      </div>
+
+    </div>
 
   </div>
 
@@ -116,52 +481,141 @@ body{
 <script>
 
 let MENU = [];
+let FILTERED = [];
 let CART = [];
+let SELECTED_ITEM = null;
 
 /* =========================
    LOAD MENU
 ========================= */
+
 async function loadMenu(){
 
-  const res = await fetch("/api/stock");
-  const json = await res.json();
+  try{
 
-  MENU = json.data || [];
+    const res =
+      await fetch("/api/stock");
 
-  renderMenu(MENU);
+    const json =
+      await res.json();
+
+    MENU = json.data || [];
+
+    FILTERED = MENU;
+
+    renderMenu(FILTERED);
+
+  }catch(e){
+
+    console.error(e);
+
+    alert("MENU LOAD ERROR");
+  }
 }
 
 /* =========================
-   MENU RENDER
+   RENDER MENU
 ========================= */
+
 function renderMenu(items){
 
   document.getElementById("menuGrid").innerHTML =
-    items.map(i => `
-      <div class="menu-item" onclick="addToCart(${i.id})">
-        <div class="menu-name">${i.name}</div>
-        <div class="menu-price">$${Number(i.price || 5)}</div>
-      </div>
-    `).join("");
+
+    items.map(item=>{
+
+      const stock =
+        Number(item.store_qty || 0);
+
+      return `
+
+        <div
+          class="menu-item"
+          onclick="addToCart(${item.id})"
+          ondblclick="selectForEdit(${item.id})"
+        >
+
+          ${
+            stock <= 0
+            ? `<div class="out-badge">OUT</div>`
+            : ``
+          }
+
+          <div class="menu-name">
+            ${item.name}
+          </div>
+
+          <div class="menu-category">
+            ${item.category || "MENU"}
+          </div>
+
+          <div class="menu-stock">
+            Stock: ${stock}
+          </div>
+
+          <div class="menu-price">
+            $${Number(item.price || 0).toFixed(2)}
+          </div>
+
+        </div>
+
+      `;
+
+    }).join("");
 }
 
 /* =========================
-   CART ADD (MERGE VERSION)
+   FILTER
 ========================= */
+
+function filterCategory(category){
+
+  if(category === "ALL"){
+
+    FILTERED = MENU;
+
+  }else{
+
+    FILTERED =
+      MENU.filter(i =>
+        (i.category || "")
+        .toUpperCase() === category
+      );
+  }
+
+  renderMenu(FILTERED);
+}
+
+/* =========================
+   CART
+========================= */
+
 function addToCart(id){
 
-  const item = MENU.find(i => i.id === id);
+  const item =
+    MENU.find(i => i.id === id);
+
   if(!item) return;
 
-  const existing = CART.find(i => i.id === id);
+  if(Number(item.store_qty || 0) <= 0){
+
+    alert("OUT OF STOCK");
+
+    return;
+  }
+
+  const existing =
+    CART.find(i => i.id === id);
 
   if(existing){
-    existing.qty += 1;
+
+    existing.qty++;
+
   }else{
+
     CART.push({
       id:item.id,
       name:item.name,
-      price:Number(item.price || 5),
+      price:Number(item.price || 0),
       qty:1
     });
   }
@@ -169,42 +623,89 @@ function addToCart(id){
   renderCart();
 }
 
-/* =========================
-   CART RENDER
-========================= */
 function renderCart(){
 
   document.getElementById("cart").innerHTML =
-    CART.map(i => `
-      <div class="cart-item">
-        <div>${i.name}</div>
 
-        <div>
-          <button onclick="minus(${i.id})">-</button>
-          ${i.qty}
-          <button onclick="plus(${i.id})">+</button>
+    CART.map(item=>`
+
+      <div class="cart-item">
+
+        <div class="cart-top">
+
+          <div>
+
+            <div class="cart-name">
+              ${item.name}
+            </div>
+
+            <div class="cart-price">
+              $${item.price.toFixed(2)}
+            </div>
+
+          </div>
+
+          <div>
+            $${(item.qty * item.price).toFixed(2)}
+          </div>
+
         </div>
+
+        <div class="cart-controls">
+
+          <button onclick="minus(${item.id})">
+            -
+          </button>
+
+          <span>${item.qty}</span>
+
+          <button onclick="plus(${item.id})">
+            +
+          </button>
+
+        </div>
+
       </div>
+
     `).join("");
 
   updateSummary();
 }
 
 function plus(id){
-  const item = CART.find(i=>i.id===id);
-  if(item) item.qty++;
+
+  const item =
+    CART.find(i => i.id === id);
+
+  if(item){
+
+    item.qty++;
+  }
+
   renderCart();
 }
 
 function minus(id){
-  const item = CART.find(i=>i.id===id);
+
+  const item =
+    CART.find(i => i.id === id);
+
   if(!item) return;
 
   item.qty--;
 
   if(item.qty <= 0){
-    CART = CART.filter(i=>i.id!==id);
+
+    CART =
+      CART.filter(i => i.id !== id);
   }
+
+  renderCart();
+}
+
+function clearCart(){
+
+  CART = [];
 
   renderCart();
 }
@@ -212,89 +713,267 @@ function minus(id){
 /* =========================
    SUMMARY
 ========================= */
+
 function updateSummary(){
 
-  const totalItems = CART.reduce((a,b)=>a+b.qty,0);
+  const totalItems =
+    CART.reduce((a,b)=>a+b.qty,0);
 
-  const totalPrice = CART.reduce(
-    (a,b)=>a + b.qty * b.price
-  ,0);
+  const totalPrice =
+    CART.reduce(
+      (a,b)=>a + (b.qty * b.price),
+      0
+    );
 
-  document.getElementById("itemCount").innerText = totalItems;
-  document.getElementById("totalPrice").innerText = "$" + totalPrice.toFixed(2);
+  document.getElementById("itemCount")
+    .innerText = totalItems;
+
+  document.getElementById("totalPrice")
+    .innerText =
+      "$" + totalPrice.toFixed(2);
 }
 
 /* =========================
-   CHECKOUT (ENTERPRISE FLOW)
+   CHECKOUT
 ========================= */
+
 async function checkout(){
 
   if(CART.length === 0){
+
     alert("Cart empty");
+
     return;
   }
 
   try{
 
-    const res = await fetch("/api/sales",{
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json"
-      },
-      body:JSON.stringify({
-        items:CART
-      })
-    });
+    const res =
+      await fetch("/api/sales",{
 
-    const json = await res.json();
+        method:"POST",
+
+        headers:{
+          "Content-Type":"application/json"
+        },
+
+        body:JSON.stringify({
+          items:CART
+        })
+
+      });
+
+    const json =
+      await res.json();
 
     if(!json.success){
+
       alert(json.error);
+
       return;
     }
 
-    // 🧾 receipt hook (optional)
-    await fetch("/api/print",{
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json"
-      },
-      body:JSON.stringify({
-        items:CART,
-        total: json.total || 0,
-        time: new Date().toISOString()
-      })
-    });
-
-    alert("PAYMENT SUCCESS");
+    alert(
+      "PAYMENT SUCCESS\n\n" +
+      "TOTAL: $" +
+      Number(
+        json.data?.total_amount || 0
+      ).toFixed(2)
+    );
 
     CART = [];
+
     renderCart();
+
     loadMenu();
 
   }catch(e){
+
     console.error(e);
-    alert("ERROR");
+
+    alert("PAYMENT ERROR");
   }
+}
+
+/* =========================
+   CREATE ITEM
+========================= */
+
+async function createItem(){
+
+  const body = {
+
+    name:
+      document.getElementById("newName").value,
+
+    price:Number(
+      document.getElementById("newPrice").value || 0
+    ),
+
+    store_qty:Number(
+      document.getElementById("newStoreQty").value || 0
+    ),
+
+    category:
+      document.getElementById("newCategory").value,
+
+    home_qty:0,
+    supplier:"POS",
+    min_stock:15,
+    ai_enabled:true
+  };
+
+  const res =
+    await fetch("/api/item",{
+
+      method:"POST",
+
+      headers:{
+        "Content-Type":"application/json"
+      },
+
+      body:JSON.stringify(body)
+
+    });
+
+  const json =
+    await res.json();
+
+  if(!json.success){
+
+    alert(json.error);
+
+    return;
+  }
+
+  alert("ITEM ADDED");
+
+  loadMenu();
+}
+
+/* =========================
+   SELECT FOR EDIT
+========================= */
+
+function selectForEdit(id){
+
+  const item =
+    MENU.find(i => i.id === id);
+
+  if(!item) return;
+
+  SELECTED_ITEM = item.id;
+
+  document.getElementById("newName").value =
+    item.name || "";
+
+  document.getElementById("newPrice").value =
+    item.price || 0;
+
+  document.getElementById("newStoreQty").value =
+    item.store_qty || 0;
+
+  document.getElementById("newCategory").value =
+    item.category || "NIGIRI";
+
+  alert(
+    "EDIT MODE\n\n" +
+    item.name
+  );
+}
+
+/* =========================
+   UPDATE ITEM
+========================= */
+
+async function updateItem(){
+
+  if(!SELECTED_ITEM){
+
+    alert("DOUBLE CLICK ITEM");
+
+    return;
+  }
+
+  const body = {
+
+    id:SELECTED_ITEM,
+
+    name:
+      document.getElementById("newName").value,
+
+    price:Number(
+      document.getElementById("newPrice").value || 0
+    ),
+
+    store_qty:Number(
+      document.getElementById("newStoreQty").value || 0
+    ),
+
+    category:
+      document.getElementById("newCategory").value
+
+  };
+
+  const res =
+    await fetch("/api/item",{
+
+      method:"PUT",
+
+      headers:{
+        "Content-Type":"application/json"
+      },
+
+      body:JSON.stringify(body)
+
+    });
+
+  const json =
+    await res.json();
+
+  if(!json.success){
+
+    alert(json.error);
+
+    return;
+  }
+
+  alert("UPDATED");
+
+  loadMenu();
 }
 
 /* =========================
    SEARCH
 ========================= */
-document.getElementById("search")
-.addEventListener("input",(e)=>{
 
-  const k = e.target.value.toLowerCase();
+document
+  .getElementById("search")
+  .addEventListener("input",(e)=>{
 
-  renderMenu(
-    MENU.filter(i =>
-      i.name.toLowerCase().includes(k)
-    )
-  );
+    const keyword =
+      e.target.value.toLowerCase();
 
-});
+    renderMenu(
+
+      FILTERED.filter(i=>
+
+        (i.name || "")
+          .toLowerCase()
+          .includes(keyword)
+
+      )
+
+    );
+  });
+
+/* =========================
+   AUTO REFRESH
+========================= */
 
 loadMenu();
+
+setInterval(loadMenu, 5000);
 
 </script>
 
