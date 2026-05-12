@@ -146,6 +146,23 @@ function renderMenu(items){
       </div>
     `).join("");
 }
+async function printReceipt(data){
+
+  const receipt = {
+    store: "OKARA SUSHI",
+    items: data.items,
+    total: data.total_amount,
+    time: new Date().toISOString()
+  };
+
+  await fetch("/api/print", {
+    method: "POST",
+    headers: {
+      "Content-Type":"application/json"
+    },
+    body: JSON.stringify(receipt)
+  });
+}
 
 /* =========================
    ADD TO CART
