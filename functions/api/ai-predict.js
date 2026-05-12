@@ -1,67 +1,50 @@
 import { createDB } from "../db/client.js";
 
-export async function onRequest(context){
+export async function onRequest(context) {
 
-  try{
+  const { env } = context;
 
-    const db = createDB(context.env);
+  try {
 
-    const result = await db
-      .prepare(`
-        SELECT *
-        FROM stock
-      `)
+    const db = createDB(env);
+
+    const res = await db
+      .prepare(`SELECT * FROM stock`)
       .all();
 
-    const items = result.results || [];
+    const items = res.results || [];
 
-    for(const item of items){
+    for (const item of items) {
 
-      const total =
-        Number(item.home_qty || 0) +
-        Number(item.store_qty || 0);
+      const usage = Number(item.daily_usage || 0);
 
-      // 최근 판매량 기반 예측
+      // 간단 ML (v1)
       const predicted =
-        Math.ceil(
-          (item.daily_usage || 1) * 7
-        );
+        Math.ceil(usage * 1.3);
 
-      // 최소재고 + 예측수요
-      let ai_order =
-        (item.min_stock || 15)
-        + predicted
-        - total;
-
-      if(ai_order < 0){
-        ai_order = 0;
-      }
+      const newMin =
+        Math.max(10, predicted);
 
       await db
         .prepare(`
           UPDATE stock
-          SET
-            predicted_demand = ?,
-            ai_order = ?
+          SET min_stock = ?
           WHERE id = ?
         `)
-        .bind(
-          predicted,
-          ai_order,
-          item.id
-        )
+        .bind(newMin, item.id)
         .run();
     }
 
     return Response.json({
-      success:true
+      success: true,
+      message: "AI prediction updated"
     });
 
-  }catch(e){
+  } catch (e) {
 
     return Response.json({
-      success:false,
-      error:e.message
-    });
+      success: false,
+      error: e.message
+    }, { status: 500 });
   }
 }
