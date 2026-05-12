@@ -12,7 +12,8 @@
 </head>
 
 <body>
-  <div class="category-tabs">
+
+<div class="category-tabs">
 
   <button onclick="filterCategory('ALL')">
     ALL
@@ -32,6 +33,10 @@
 
   <button onclick="filterCategory('DRINK')">
     DRINK
+  </button>
+
+  <button onclick="filterCategory('SIDE')">
+    SIDE
   </button>
 
 </div>
@@ -74,10 +79,13 @@
 
       <div class="summary-row total">
         <span>Total</span>
-        <span id="totalPrice">$0</span>
+        <span id="totalPrice">$0.00</span>
       </div>
 
-      <button class="pay-btn" onclick="checkout()">
+      <button
+        class="pay-btn"
+        onclick="checkout()"
+      >
         PAY NOW
       </button>
 
@@ -90,57 +98,99 @@
 <script>
 
 let MENU = [];
+let FILTERED_MENU = [];
 let CART = [];
 
 async function loadMenu(){
 
-  const res =
-    await fetch("/api/stock");
+  try{
 
-  const json =
-    await res.json();
+    const res =
+      await fetch("/api/stock");
 
-  MENU = json.data || [];
+    const json =
+      await res.json();
 
-  renderMenu(MENU);
+    if(!json.success){
+      alert(json.error || "LOAD ERROR");
+      return;
+    }
+
+    MENU = json.data || [];
+
+    FILTERED_MENU = MENU;
+
+    renderMenu(FILTERED_MENU);
+
+  }catch(e){
+
+    console.error(e);
+
+    alert("MENU LOAD FAILED");
+  }
 }
 
 function renderMenu(items){
 
   document.getElementById("menuGrid").innerHTML =
-    items.map(item => `
+    items.map(item => {
 
-      <div
-        class="menu-item"
-        onclick="addToCart(${item.id})"
-      >
+      const totalStock =
+        Number(item.home_qty || 0) +
+        Number(item.store_qty || 0);
 
-        <div class="menu-name">
-          ${item.name}
+      return `
+
+        <div
+          class="menu-item"
+          onclick="addToCart(${item.id})"
+        >
+
+          <div class="menu-name">
+            ${item.name}
+          </div>
+
+          <div class="menu-category">
+            ${item.category || "MENU"}
+          </div>
+
+          <div class="menu-stock">
+            Stock: ${totalStock}
+          </div>
+
+          <div class="menu-price">
+            $${Number(item.price || 5).toFixed(2)}
+          </div>
+
         </div>
 
-        <div class="menu-stock">
-          Stock:
-          ${
-            Number(item.home_qty||0) +
-            Number(item.store_qty||0)
-          }
-        </div>
+      `;
 
-        <div class="menu-price">
-          $
-          ${Number(item.price || 5).toFixed(2)}
-        </div>
+    }).join("");
+}
 
-      </div>
+function filterCategory(category){
 
-    `).join("");
+  if(category === "ALL"){
+
+    FILTERED_MENU = MENU;
+
+  }else{
+
+    FILTERED_MENU =
+      MENU.filter(item =>
+        (item.category || "")
+        .toUpperCase() === category
+      );
+  }
+
+  renderMenu(FILTERED_MENU);
 }
 
 function addToCart(id){
 
   const item =
-    MENU.find(i=>i.id===id);
+    MENU.find(i => i.id === id);
 
   if(!item) return;
 
@@ -153,23 +203,39 @@ function addToCart(id){
 
     if(options.length > 0){
 
-      selectedOption = prompt(
-        `OPTIONS:\n\n${options.join("\n")}`,
-        options[0]
-      ) || "";
+      selectedOption =
+        prompt(
+          "OPTION:\n\n" +
+          options.join("\n"),
+          options[0]
+        ) || "";
     }
 
   }catch(e){
+
     console.log(e);
   }
 
-  CART.push({
-    id:item.id,
-    name:item.name,
-    price:Number(item.price || 5),
-    qty:1,
-    option:selectedOption
-  });
+  const existing =
+    CART.find(i =>
+      i.id === item.id &&
+      i.option === selectedOption
+    );
+
+  if(existing){
+
+    existing.qty++;
+
+  }else{
+
+    CART.push({
+      id:item.id,
+      name:item.name,
+      price:Number(item.price || 5),
+      qty:1,
+      option:selectedOption
+    });
+  }
 
   renderCart();
 }
@@ -177,7 +243,8 @@ function addToCart(id){
 function renderCart(){
 
   document.getElementById("cart").innerHTML =
-    CART.map(item=>`
+
+    CART.map(item => `
 
       <div class="cart-item">
 
@@ -186,26 +253,26 @@ function renderCart(){
           <div class="cart-name">
             ${item.name}
           </div>
+
           <div class="cart-option">
-            ${item.option || ''}
+            ${item.option || ""}
           </div>
-          
 
           <div class="cart-price">
-            $${item.price}
+            $${item.price.toFixed(2)}
           </div>
 
         </div>
 
         <div class="cart-controls">
 
-          <button onclick="decrease(${item.id})">
+          <button onclick="decrease(${item.id}, '${item.option}')">
             -
           </button>
 
           <span>${item.qty}</span>
 
-          <button onclick="increase(${item.id})">
+          <button onclick="increase(${item.id}, '${item.option}')">
             +
           </button>
 
@@ -218,10 +285,13 @@ function renderCart(){
   updateSummary();
 }
 
-function increase(id){
+function increase(id, option){
 
   const item =
-    CART.find(i=>i.id===id);
+    CART.find(i =>
+      i.id === id &&
+      i.option === option
+    );
 
   if(item){
     item.qty++;
@@ -230,10 +300,13 @@ function increase(id){
   renderCart();
 }
 
-function decrease(id){
+function decrease(id, option){
 
   const item =
-    CART.find(i=>i.id===id);
+    CART.find(i =>
+      i.id === id &&
+      i.option === option
+    );
 
   if(!item) return;
 
@@ -242,7 +315,9 @@ function decrease(id){
   if(item.qty <= 0){
 
     CART =
-      CART.filter(i=>i.id!==id);
+      CART.filter(i =>
+        !(i.id === id && i.option === option)
+      );
   }
 
   renderCart();
@@ -255,7 +330,7 @@ function updateSummary(){
 
   const totalPrice =
     CART.reduce(
-      (a,b)=>a+(b.qty*b.price),
+      (a,b)=>a + (b.qty * b.price),
       0
     );
 
@@ -270,35 +345,46 @@ function updateSummary(){
 async function checkout(){
 
   if(CART.length === 0){
+
     alert("Cart empty");
+
     return;
   }
 
-  for(const item of CART){
+  try{
 
-    await fetch("/api/order",{
+    for(const item of CART){
 
-      method:"POST",
+      await fetch("/api/order",{
 
-      headers:{
-        "Content-Type":"application/json"
-      },
+        method:"POST",
 
-      body:JSON.stringify({
-        stock_id:item.id,
-        qty:item.qty
-      })
+        headers:{
+          "Content-Type":"application/json"
+        },
 
-    });
+        body:JSON.stringify({
+          stock_id:item.id,
+          qty:item.qty
+        })
+
+      });
+    }
+
+    alert("Payment Complete");
+
+    CART = [];
+
+    renderCart();
+
+    loadMenu();
+
+  }catch(e){
+
+    console.error(e);
+
+    alert("PAYMENT ERROR");
   }
-
-  alert("Payment Complete");
-
-  CART = [];
-
-  renderCart();
-
-  loadMenu();
 }
 
 document
@@ -309,9 +395,10 @@ document
       e.target.value.toLowerCase();
 
     const filtered =
-      MENU.filter(i=>
-        i.name.toLowerCase()
-        .includes(keyword)
+      FILTERED_MENU.filter(i =>
+        i.name
+          .toLowerCase()
+          .includes(keyword)
       );
 
     renderMenu(filtered);
