@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta charset="UTF-8">
+
+<title>Dashboard</title>
+
+<link rel="stylesheet" href="/css/style.css">
+
+</head>
+
+<body>
+
+<div class="dashboard">
+
+  <div class="card">
+
+    <h2>💰 TODAY SALES</h2>
+
+    <div id="sales">$0</div>
+
+  </div>
+
+  <div class="card">
+
+    <h2>🧾 ORDERS</h2>
+
+    <div id="orders">0</div>
+
+  </div>
+
+  <div class="card">
+
+    <h2>🔥 TOP ITEMS</h2>
+
+    <div id="topItems"></div>
+
+  </div>
+
+</div>
+
+<script>
+
+async function loadDashboard(){
+
+  const res =
+    await fetch("/api/dashboard");
+
+  const json =
+    await res.json();
+
+  const data =
+    json.data;
+
+  document.getElementById("sales")
+    .innerText =
+      "$" +
+      Number(data.sales).toFixed(2);
+
+  document.getElementById("orders")
+    .innerText =
+      data.orders;
+
+  document.getElementById("topItems")
+    .innerHTML =
+
+    data.top_items.map(i=>`
+
+      <div>
+        ${i.menu_name}
+        (${i.qty})
+      </div>
+
+    `).join("");
+}
+
+loadDashboard();
+
+setInterval(loadDashboard,3000);
+
+</script>
+
+</body>
+</html>
